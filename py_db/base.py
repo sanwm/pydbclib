@@ -1,7 +1,8 @@
 from collections import OrderedDict
-from py_db.utils import ObjEncoder
 import sys
-import json
+# import json
+# from py_db.utils import ObjEncoder
+from py_db.utils import reduce_num
 from py_db.mylogger import log
 
 
@@ -47,7 +48,12 @@ class Connection(object):
         return self.connect.cursor()
 
     def execute(self, sql, *args, **kw):
+        log.debug("%s %s" % (sql, args[0]))
         return self.session.execute(sql, *args, **kw)
+
+    def executemany(self, sql, *args, **kw):
+        log.debug("%s [%s...%s]" % (sql, args[0][0], args[0][-1]))
+        return self.session.executemany(sql, *args, **kw)
 
     def _query_generator(self, sql, args, chunksize):
         self.execute(sql, args)
@@ -66,7 +72,7 @@ class Connection(object):
 
     def _query_dict_generator(self, sql, Dict, args, chunksize):
         self.execute(sql, args)
-        colunms = [i[0] for i in self.description()]
+        colunms = [i[0].lower() for i in self.description()]
         res = self.session.fetchmany(chunksize)
         while res:
             yield [Dict(zip(colunms, i)) for i in res]
@@ -76,7 +82,7 @@ class Connection(object):
         Dict = OrderedDict if ordered else dict
         if size is None:
             self.execute(sql, args)
-            colunms = [i[0] for i in self.description()]
+            colunms = [i[0].lower() for i in self.description()]
             return [Dict(zip(colunms, i)) for i in self.session.fetchall()]
         else:
             return self._query_dict_generator(sql, Dict, args, size)
@@ -86,34 +92,37 @@ class Connection(object):
         count = 0
         # log.info(args, length)
         try:
-            if args and not isinstance(args, dict)\
-                    and isinstance(args[0], (tuple, list, dict)):
+            if (args and not isinstance(args, dict) and
+                    isinstance(args[0], (tuple, list, dict))):
                 for i in range(0, length, num):
-                    self.session.executemany(sql, args[i:i + num])
+                    self.executemany(sql, args[i:i + num])
                     count += self.session.rowcount
             else:
                 self.execute(sql, args)
                 count = self.session.rowcount
         except self.DatabaseError as reason:
             self.rollback()
-            if args and not isinstance(args, dict)\
-                    and isinstance(args[0], (tuple, list, dict)):
+            if (args and not isinstance(args, dict) and
+                    isinstance(args[0], (tuple, list, dict))):
                 if num <= 10 or length <= 10:
-                    err_msg = ['SQL EXECUTEMANY ERROR\n %s\n' % sql]
-                    err_msg.append(
-                        json.dumps(args[i:i + num], cls=ObjEncoder, indent=1)
-                    )
-                    err_msg.append('\nSQL EXECUTEMANY ERROR')
-                    log.error(''.join(err_msg))
-                    log.error(reason)
-                    sys.exit()
+                    # err_msg = ['SQL EXECUTEMANY ERROR\n %s\n' % sql]
+                    # err_msg.append(json.dumps(
+                    #     args[i:i + num], cls=ObjEncoder, indent=1))
+                    # err_msg.append('\nSQL EXECUTEMANY ERROR')
+                    # log.error(''.join(err_msg))
+                    # log.error(reason)
+                    # sys.exit()
+                    log.error("SQL EXECUTEMANY ERROR"
+                              "begin execute for everyone")
+                    for record in args[i:i + num]:
+                        self.insert(sql, record)
                 else:
                     self.insert(
                         sql, args[i:i + num],
                         num=reduce_num(num, length))
             else:
                 log.error(
-                    'SQL EXECUTE ERROR\n%s\n%s\nSQL EXECUTE ERROR' %
+                    'SQL EXECUTE ERROR\n%s\n%s' %
                     (sql, args)
                 )
                 log.error(reason)
@@ -139,7 +148,7 @@ class Connection(object):
                                                update_field=update_field,
                                                t1_columns=t1_columns,
                                                t2_columns=t2_columns))
-        log.info(sql)
+        # log.info(sql)
         self.execute(sql, args)
 
     def delete_repeat(self, table, unique, cp_field="rowid"):

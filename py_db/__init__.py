@@ -2,11 +2,13 @@
 """
     db connection
 """
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 __all__ = ['connection']
 
+import logging
 # from sqlalchemy import engine
+from py_db.mylogger import log
 
 
 def connection(*args, **kwargs):
@@ -20,10 +22,13 @@ def connection(*args, **kwargs):
             use_kerberos=True, kerberos_service_name="impala",
             timeout=3600, driver="impala.dbapi")
     """
+    if kwargs.get('debug'):
+        log.setLevel(logging.DEBUG)
+        kwargs.pop('debug')
     driver = kwargs.get('driver')
     if driver is None:
-        from . import sqlalchemy_db
-        return sqlalchemy_db.Connection(*args)
+        from . import sqlalchemy
+        return sqlalchemy.Connection(*args, **kwargs)
     else:
         from . import base
         return base.Connection(*args, **kwargs)

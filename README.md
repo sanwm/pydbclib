@@ -1,5 +1,11 @@
 py_db: utils used to operate database
 
+'0.0.6'
+1.log优化
+
+'0.0.5'
+1.添加utils模块
+
 '0.0.4'
 1.对fetall的数据格式化，各类数据库之间调用数据格式统一（pyodbc 返回pyodbc.row 类型）
 
