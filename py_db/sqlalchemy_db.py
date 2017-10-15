@@ -6,28 +6,9 @@ from sqlalchemy import engine
 import json
 import re
 import os
-if __name__ == '__main__':
-    import sys
-    sys.path.insert(
-        0,
-        os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    )
-    from mylogger import log
-else:
-    from .mylogger import log
+from py_db.utils import ObjEncoder, reduce_num
+from py_db.mylogger import log
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
-
-
-def print(*args, notice='print values'):
-    log.debug('%s>>>>>>\n%s' % (notice, ' '.join(['%s' % i for i in args])))
-
-
-def reduce_num(n, l):
-    num = min(n, l)
-    if num > 10:
-        return num % 10
-    else:
-        return 1
 
 
 class Connection():
@@ -51,8 +32,8 @@ class Connection():
         """
         if ':1' in sql:
             num = sql.count(':1')
-            sql = sql.replace(':1', '%s') % tuple(
-                [':%s' % i for i in range(num)]
+            sql = sql.replace(':1', '{}').format(
+                *[':%s' % i for i in range(num)]
             )
             keys = [str(i) for i in range(num)]
             if isinstance(args[0], (list, tuple)):
@@ -76,7 +57,37 @@ class Connection():
         colunms = [i[0] for i in rs._cursor_description()]
         return [OrderedDict(zip(colunms, i)) for i in rs.fetchall()]
 
-    def insert(self, sql, args, num=10000):
+    def _modify_field_size(self, reason):
+        """
+        修改oracle char 类型字段大小
+        """
+        match_reason = re.compile(
+            r'"\w+"\."(\w+)"\."(\w+)" 的值太大 \(实际值: (\d+),')
+        rs = match_reason.search(str(reason))
+        table_name, column_name, value = (
+            rs.group(1), rs.group(2), rs.group(3))
+        delta = 2 if len(
+            str(value)) == 1 else 2 * 10**(len(str(value)) - 2)
+        sql_query = ("select data_type,char_used from user_tab_columns"
+                     " where table_name='%s' and column_name='%s'" % (
+                         table_name, column_name))
+        data_type, char_used = self.query(sql_query)[0]
+        if char_used == 'C':
+            char_type = 'char'
+        elif char_used == 'B':
+            char_type = 'byte'
+        else:
+            char_type = ''
+        sql_modify = ("alter table {table_name} modify({column_name}"
+                      " {data_type}({value} {char_type}))".format(
+                          table_name=table_name,
+                          column_name=column_name,
+                          data_type=data_type,
+                          char_type=char_type,
+                          value=int(value) + delta))
+        self.session.execute(sql_modify)
+
+    def insert(self, sql, args=[], num=10000):
         """
         批量更新插入，默认超过10000条数据自动commit
         insertone:
@@ -105,45 +116,16 @@ class Connection():
                 count = rs.rowcount
         except DatabaseError as reason:
             self.rollback()
-            # match_name = re.compile('(?:into|update) +(\S+)')
-            # table_name = match_name.findall(sql)[0]
-            # cx_Oracle.DatabaseError: ORA-12899:
-            # 列 "PPS1DBA"."PATROL_WPXX"."OBJ_NAME" 的值太大 (实际值: 40, 最大值: 25)
             if '的值太大' in str(reason):
-                match_reason = re.compile(
-                    r'"\w+"\."(\w+)"\."(\w+)" 的值太大 \(实际值: (\d+),')
-                rs = match_reason.search(str(reason))
-                table_name, column_name, value = (
-                    rs.group(1), rs.group(2), rs.group(3))
-                delta = 2 if len(
-                    str(value)) == 1 else 2 * 10**(len(str(value)) - 2)
-                sql_query = ("select data_type,char_used from user_tab_columns"
-                             " where table_name='%s' and column_name='%s'" % (
-                                 table_name, column_name))
-                data_type, char_used = self.query(sql_query)[0]
-                if char_used == 'C':
-                    char_type = 'char'
-                elif char_used == 'B':
-                    char_type = 'byte'
-                else:
-                    char_type = ''
-                sql_modify = ("alter table {table_name} modify({column_name}"
-                              " {data_type}({value} {char_type}))".format(
-                                  table_name=table_name,
-                                  column_name=column_name,
-                                  data_type=data_type,
-                                  char_type=char_type,
-                                  value=int(value) + delta))
-                self.session.execute(sql_modify)
+                self._modify_field_size(reason)
                 count += self.insert(sql, args, num)
             else:
                 if args and not isinstance(args, dict)\
                         and isinstance(args[0], (tuple, list, dict)):
                     if num <= 10 or length <= 10:
                         err_msg = ['\nSQL EXECUTEMANY ERROR\n %s' % sql]
-                        # for record in args[i:i + num]:
-                        #     err_msg.append('\n %s' % record)
-                        err_msg.append(json.dumps(args[i:i + num], indent=1))
+                        err_msg.append(json.dumps(
+                            args[i:i + num], cls=ObjEncoder, indent=1))
                         err_msg.append('\nSQL EXECUTEMANY ERROR\n')
                         log.error(''.join(err_msg))
                         raise reason

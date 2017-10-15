@@ -1,30 +1,8 @@
 from collections import OrderedDict
+from py_db.utils import ObjEncoder
 import sys
 import json
-from .mylogger import log
-# console = logging.StreamHandler()
-# formatter = logging.Formatter(
-#     '%(asctime)s %(levelname)s %(module)s/%(name)s: %(message)s')
-# console.setFormatter(formatter)
-# log = logging.getLogger('SQL')
-# log.addHandler(console)
-# log.setLevel(logging.INFO)
-
-
-class ObjEncoder(json.JSONEncoder):
-    def default(self, obj):
-        return obj.__repr__()
-        # if not isinstance(obj, (list)):
-        #     return obj.__repr__()
-        # return json.JSONEncoder.default(self, obj)
-
-
-def reduce_num(n, l):
-    num = min(n, l)
-    if num > 10:
-        return num % 10
-    else:
-        return 1
+from py_db.mylogger import log
 
 
 class Connection(object):
@@ -81,7 +59,8 @@ class Connection(object):
     def query(self, sql, args=[], size=None):
         if size is None:
             self.execute(sql, args)
-            return self.session.fetchall()
+            res = [tuple(i) for i in self.session.fetchall()]
+            return res
         else:
             return self._query_generator(sql, args, size)
 
@@ -102,7 +81,7 @@ class Connection(object):
         else:
             return self._query_dict_generator(sql, Dict, args, size)
 
-    def insert(self, sql, args, num=10000):
+    def insert(self, sql, args=[], num=10000):
         length = len(args)
         count = 0
         # log.info(args, length)
