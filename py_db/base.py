@@ -48,7 +48,10 @@ class Connection(object):
         return self.connect.cursor()
 
     def execute(self, sql, *args, **kw):
-        log.debug("%s %s" % (sql, args[0]))
+        if args:
+            log.debug("%s %s" % (sql, args[0]))
+        else:
+            log.debug(sql)
         return self.session.execute(sql, *args, **kw)
 
     def executemany(self, sql, *args, **kw):
