@@ -48,6 +48,9 @@ class Connection(object):
         return self.connect.cursor()
 
     def execute(self, sql, *args, **kw):
+        if ":1" in sql and '?' not in sql:
+            sql = sql.replace(":1", "?")
+            # print(sql)
         if args:
             log.debug("%s %s" % (sql, args[0]))
         else:
@@ -55,6 +58,8 @@ class Connection(object):
         return self.session.execute(sql, *args, **kw)
 
     def executemany(self, sql, *args, **kw):
+        if ":1" in sql and '?' not in sql:
+            sql = sql.replace(":1", "?")
         log.debug("%s [%s...%s]" % (sql, args[0][0], args[0][-1]))
         return self.session.executemany(sql, *args, **kw)
 
