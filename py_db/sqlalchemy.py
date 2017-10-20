@@ -33,9 +33,9 @@ class Connection(object):
         执行sql
         """
         if args and isinstance(args[0], (list, tuple, dict)):
-            log.debug("%s [%s...%s]" % (sql, args[0], args[-1]))
+            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
         else:
-            log.debug("%s %s" % (sql, args))
+            log.debug("%s\n%s" % (sql, args))
         if ':1' in sql:
             num = sql.count(':1')
             sql = sql.replace(':1', '{}').format(

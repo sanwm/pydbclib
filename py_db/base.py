@@ -47,15 +47,20 @@ class Connection(object):
     def create_session(self):
         return self.connect.cursor()
 
-    def execute(self, sql, *args, **kw):
-        if ":1" in sql and '?' not in sql:
+    def execute(self, sql, args=[]):
+        if (":1" in sql and '?' not in sql and
+                self.driver_name != "cx_Oracle"):
             sql = sql.replace(":1", "?")
-            # print(sql)
-        if args:
-            log.debug("%s %s" % (sql, args[0]))
+        if (args and not isinstance(args, dict) and
+                isinstance(args[0], (tuple, list, dict))):
+            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
+            self.session.executemany(sql, args)
         else:
-            log.debug(sql)
-        return self.session.execute(sql, *args, **kw)
+            if args:
+                log.debug("%s\n%s" % (sql, args))
+            else:
+                log.debug(sql)
+            return self.session.execute(sql, args)
 
     def executemany(self, sql, *args, **kw):
         if ":1" in sql and '?' not in sql:
@@ -103,7 +108,7 @@ class Connection(object):
             if (args and not isinstance(args, dict) and
                     isinstance(args[0], (tuple, list, dict))):
                 for i in range(0, length, num):
-                    self.executemany(sql, args[i:i + num])
+                    self.execute(sql, args[i:i + num])
                     count += self.session.rowcount
             else:
                 self.execute(sql, args)
