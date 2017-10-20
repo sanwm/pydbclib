@@ -2,7 +2,8 @@ import logging
 console = logging.StreamHandler()
 formatter = logging.Formatter(
     # '%(asctime)s %(levelname)s %(module)s/%(name)s: %(message)s'
-    '<%(asctime)s %(levelname)s %(name)s.%(module)s> %(message)s'
+    '<%(asctime)s %(name)s.%(module)s> %(levelname)s: %(message)s',
+    '%Y-%m-%d %H:%M:%S'
 )
 console.setFormatter(formatter)
 log = logging.getLogger("py_db")

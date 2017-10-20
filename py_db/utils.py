@@ -1,4 +1,7 @@
 import json
+import functools
+import time
+from py_db.logger import log
 
 
 class ObjEncoder(json.JSONEncoder):
@@ -15,3 +18,33 @@ def reduce_num(n, l):
         return num % 10
     else:
         return 1
+
+
+def run_time(func):
+    """
+    记录函数执行时间
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kw):
+        T = time.time()
+        rs = func(*args, **kw)
+        log.info('function [%s] run: %ss' % (
+            func.__name__, round(time.time() - T, 3)))
+        return rs
+    return wrapper
+
+
+def concat_field(field, concat=','):
+    """
+    >>> concat_field(['id','name'])
+    'id,name'
+    """
+    return split_str.join(field)
+
+
+def concat_place(field, place=":1"):
+    """
+    >>> concat_place(['id','name'])
+    ':1,:1'
+    """
+    return ','.join([place for i in range(len(field))])

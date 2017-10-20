@@ -1,31 +1,12 @@
 from collections import OrderedDict
 import sys
-# import json
-# from py_db.utils import ObjEncoder
 from py_db.utils import reduce_num
-from py_db.mylogger import log
+from py_db.logger import log
 
 
 class Connection(object):
-    # driver_name = ""
-    # @classmethod
-    # def _import_module(cls, name):
-    #     n = name.rfind('.')
-    #     if n == -1:
-    #         return __import__(name)
-    #     else:
-    #         subname = name[n + 1:]
-    #         return getattr(cls._import_module(name[:n]), subname)
-
-    # @classmethod
-    # def dbapi(cls):
-    #     __import__(cls.driver_name)
-    #     return sys.modules[cls.driver_name]
-        # return cls._import_module(cls.driver_name)
-        # return __import__(cls.driver_name, globals(), locals(), [], -1)
 
     def __init__(self, *args, **kwargs):
-        # print(args, kwargs)
         self.driver_name = kwargs.get("driver")
         kwargs.pop('driver')
         # print(args, kwargs)
@@ -53,14 +34,14 @@ class Connection(object):
             sql = sql.replace(":1", "?")
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (tuple, list, dict))):
-            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
             self.session.executemany(sql, args)
+            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
         else:
+            self.session.execute(sql, args)
             if args:
                 log.debug("%s\n%s" % (sql, args))
             else:
                 log.debug(sql)
-            return self.session.execute(sql, args)
 
     def executemany(self, sql, *args, **kw):
         if ":1" in sql and '?' not in sql:
@@ -103,7 +84,6 @@ class Connection(object):
     def insert(self, sql, args=[], num=10000):
         length = len(args)
         count = 0
-        # log.info(args, length)
         try:
             if (args and not isinstance(args, dict) and
                     isinstance(args[0], (tuple, list, dict))):
@@ -118,15 +98,7 @@ class Connection(object):
             if (args and not isinstance(args, dict) and
                     isinstance(args[0], (tuple, list, dict))):
                 if num <= 10 or length <= 10:
-                    # err_msg = ['SQL EXECUTEMANY ERROR\n %s\n' % sql]
-                    # err_msg.append(json.dumps(
-                    #     args[i:i + num], cls=ObjEncoder, indent=1))
-                    # err_msg.append('\nSQL EXECUTEMANY ERROR')
-                    # log.error(''.join(err_msg))
-                    # log.error(reason)
-                    # sys.exit()
-                    log.error("SQL EXECUTEMANY ERROR"
-                              "begin execute for everyone")
+                    log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
                     for record in args[i:i + num]:
                         self.insert(sql, record)
                 else:
@@ -136,8 +108,7 @@ class Connection(object):
             else:
                 log.error(
                     'SQL EXECUTE ERROR\n%s\n%s' %
-                    (sql, args)
-                )
+                    (sql, args))
                 log.error(reason)
                 sys.exit()
         return count
@@ -161,7 +132,6 @@ class Connection(object):
                                                update_field=update_field,
                                                t1_columns=t1_columns,
                                                t2_columns=t2_columns))
-        # log.info(sql)
         self.execute(sql, args)
 
     def delete_repeat(self, table, unique, cp_field="rowid"):

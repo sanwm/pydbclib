@@ -7,8 +7,6 @@ __version__ = '0.0.6'
 __all__ = ['connection']
 
 import logging
-# from sqlalchemy import engine
-from py_db.mylogger import log
 
 
 def connection(*args, **kwargs):
@@ -24,7 +22,7 @@ def connection(*args, **kwargs):
     """
     if kwargs.get('debug'):
         log.setLevel(logging.DEBUG)
-        kwargs.pop('debug')
+    kwargs.pop('debug', None)
     driver = kwargs.get('driver')
     if driver is None:
         from . import sqlalchemy

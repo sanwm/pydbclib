@@ -6,10 +6,8 @@ from sqlalchemy import engine
 import re
 import os
 import sys
-# import json
-# from py_db.utils import ObjEncoder
 from py_db.utils import reduce_num
-from py_db.mylogger import log
+from py_db.logger import log
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
@@ -32,10 +30,6 @@ class Connection(object):
         """
         执行sql
         """
-        if args and isinstance(args[0], (list, tuple, dict)):
-            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
-        else:
-            log.debug("%s\n%s" % (sql, args))
         if ':1' in sql:
             num = sql.count(':1')
             sql = sql.replace(':1', '{}').format(
@@ -46,7 +40,16 @@ class Connection(object):
                 args = [dict(zip(keys, i)) for i in args]
             else:
                 args = dict(zip(keys, args))
-        return self.session.execute(sql, args)
+        rs = self.session.execute(sql, args)
+        if (args and not isinstance(args, dict) and
+                isinstance(args[0], (list, tuple, dict))):
+            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
+        else:
+            if args:
+                log.debug("%s\n%s" % (sql, args))
+            else:
+                log.debug(sql)
+        return rs
 
     def _query_generator(self, sql, args, chunksize):
         rs = self.execute(sql, args)
@@ -56,9 +59,6 @@ class Connection(object):
             res = rs.fetchmany(chunksize)
 
     def query(self, sql, args=[], size=None):
-        """
-        查询返回元祖数据集(clob对象转对应字符串)
-        """
         if size is None:
             rs = self.execute(sql, args).fetchall()
             res = [tuple(i) for i in rs]
@@ -75,9 +75,6 @@ class Connection(object):
             res = rs.fetchmany(chunksize)
 
     def query_dict(self, sql, args=[], ordered=False, size=None):
-        """
-        查询返回字典数据集
-        """
         Dict = OrderedDict if ordered else dict
         if size is None:
             rs = self.execute(sql)
@@ -145,24 +142,14 @@ class Connection(object):
                 count = rs.rowcount
         except DatabaseError as reason:
             self.rollback()
-            # if 0:
-            #     pass
-            if '的值太大' in str(reason):
+            if 'ORA-12899' in str(reason):
                 self._modify_field_size(reason)
                 count += self.insert(sql, args, num)
             else:
                 if (args and not isinstance(args, dict) and
                         isinstance(args[0], (tuple, list, dict))):
                     if num <= 10 or length <= 10:
-                        # err_msg = ['SQL EXECUTEMANY ERROR\n %s' % sql]
-                        # err_msg.append(json.dumps(
-                        #     args[i:i + num], cls=ObjEncoder, indent=1))
-                        # err_msg.append('\nSQL EXECUTEMANY ERROR')
-                        # log.error(''.join(err_msg))
-                        # log.error(reason)
-                        # sys.exit()
-                        log.error("SQL EXECUTEMANY ERROR"
-                                  "begin execute for everyone")
+                        log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
                         for record in args[i:i + num]:
                             self.insert(sql, record)
                     else:
@@ -172,8 +159,7 @@ class Connection(object):
                 else:
                     log.error(
                         'SQL EXECUTE ERROR\n%s\n%s' %
-                        (sql, args)
-                    )
+                        (sql, args))
                     log.error(reason)
                     sys.exit()
         return count

@@ -1,7 +1,7 @@
 py_db: utils used to operate database
 
 '0.0.6'
-1.log优化
+1.log优化, 统一占位符为 ':1'
 
 '0.0.5'
 1.添加utils模块
