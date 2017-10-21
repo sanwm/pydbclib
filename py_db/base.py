@@ -109,8 +109,9 @@ class Connection(object):
                 log.error(
                     'SQL EXECUTE ERROR\n%s\n%s' %
                     (sql, args))
-                log.error(reason)
-                sys.exit()
+                # log.error(reason)
+                # sys.exit()
+                raise reason
         return count
 
     def merge(self, table, args, columns, unique, num=10000):

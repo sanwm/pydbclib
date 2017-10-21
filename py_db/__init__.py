@@ -7,6 +7,7 @@ __version__ = '0.0.6'
 __all__ = ['connection']
 
 import logging
+from py_db.logger import log
 
 
 def connection(*args, **kwargs):
