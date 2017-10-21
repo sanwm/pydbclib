@@ -39,7 +39,7 @@ def concat_field(field, concat=','):
     >>> concat_field(['id','name'])
     'id,name'
     """
-    return split_str.join(field)
+    return concat.join(field)
 
 
 def concat_place(field, place=":1"):
