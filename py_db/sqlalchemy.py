@@ -8,7 +8,7 @@ import os
 import sys
 from py_db.utils import reduce_num
 from py_db.logger import log
-# os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
+os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
 class Connection(object):
