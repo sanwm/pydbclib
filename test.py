@@ -1,6 +1,4 @@
 from py_db import connection
-import sys
-print(sys.path)
 # sqlalchemy module
 db = connection("oracle://jwdn:password@local:1521/xe", debug=True)
 # db = connection("mysql+pyodbc://:@mysqldb", debug=True)
@@ -17,7 +15,7 @@ print(res)
 
 # db = connection("mysql+pyodbc://:@mysqldb", debug=True)
 # db = connection('DSN=mysqldb', driver="pyodbc")
-db = connection('DSN=oracledb;PWD=password', driver="pyodbc")
+# db = connection('DSN=oracledb;PWD=password', driver="pyodbc")
 
 
 db.insert("insert into py_db(foo,bar) values(:1,:1)", res)
