@@ -26,29 +26,60 @@ class Connection(object):
         DB_Session = sessionmaker(bind=self._eng)
         return DB_Session()
 
-    def execute(self, sql, args=[]):
+    def execute(self, sql, args=[], num=10000):
         """
         执行sql
         """
-        if ':1' in sql:
+        if (':1' in sql and args and isinstance(args, (list, tuple)) and
+                not isinstance(args[0], dict)):
             num = sql.count(':1')
             sql = sql.replace(':1', '{}').format(
-                *[':%s' % i for i in range(num)]
-            )
+                *[':%s' % i for i in range(num)])
             keys = [str(i) for i in range(num)]
             if isinstance(args[0], (list, tuple)):
                 args = [dict(zip(keys, i)) for i in args]
             else:
                 args = dict(zip(keys, args))
-        rs = self.session.execute(sql, args)
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (list, tuple, dict))):
+            rs = self.executemany(sql, args, num)
             log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
         else:
+            rs = self.executeone(sql, args)
             if args:
                 log.debug("%s\n%s" % (sql, args))
             else:
                 log.debug(sql)
+        return rs
+
+    def executeone(self, sql, args):
+        try:
+            rs = self.session.execute(sql, args)
+        except DatabaseError as reason:
+            self.rollback()
+            log.error('SQL EXECUTE ERROR\n%s\n%s' % (sql, args))
+            log.error(reason)
+            sys.exit(1)
+        return rs
+
+    def executemany(self, sql, args, num):
+        length = len(args)
+        count = 0
+        try:
+            for i in range(0, length, num):
+                rs = self.session.execute(sql, args[i:i + num])
+                count += rs.rowcount
+        except DatabaseError as reason:
+            self.rollback()
+            if reduce_num(num, length) <= 10 or length <= 10:
+                log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
+                for record in args[i:i + num]:
+                    self.executeone(sql, record)
+            else:
+                self.executemany(
+                    sql, args[i:i + num],
+                    num=reduce_num(num, length))
+        rs.rowcount = count
         return rs
 
     def _query_generator(self, sql, args, chunksize):
@@ -113,56 +144,61 @@ class Connection(object):
                           value=int(value) + delta))
         self.execute(sql_modify)
 
+    # def insert(self, sql, args=[], num=10000):
+    #     """
+    #     批量更新插入，默认超过10000条数据自动commit
+    #     insertone:
+    #         self.insert(
+    #             "insert into test(id) values(:id)",
+    #             {'id': 6666}
+    #         )
+    #     insertmany:
+    #         self.insert(
+    #             "insert into test(id) values(:id)",
+    #             [{'id': 6666}, {'id': 8888}]
+    #         )
+    #     @num:
+    #         批量插入时定义一次插入的数量，默认10000
+    #     """
+    #     length = len(args)
+    #     count = 0
+    #     try:
+    #         if (args and not isinstance(args, dict) and
+    #                 isinstance(args[0], (tuple, list, dict))):
+    #             for i in range(0, length, num):
+    #                 rs = self.execute(sql, args[i:i + num])
+    #                 count += rs.rowcount
+    #         else:
+    #             rs = self.execute(sql, args)
+    #             count = rs.rowcount
+    #     except DatabaseError as reason:
+    #         self.rollback()
+    #         # if 0:
+    #         #     pass
+    #         if 'ORA-12899' in str(reason):
+    #             self._modify_field_size(reason)
+    #             count += self.insert(sql, args, num)
+    #         else:
+    #             if (args and not isinstance(args, dict) and
+    #                     isinstance(args[0], (tuple, list, dict))):
+    #                 if reduce_num(num, length) <= 10 or length <= 10:
+    #                     log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
+    #                     for record in args[i:i + num]:
+    #                         self.insert(sql, record)
+    #                 else:
+    #                     self.insert(
+    #                         sql, args[i:i + num],
+    #                         num=reduce_num(num, length))
+    #             else:
+    #                 log.error(
+    #                     'SQL EXECUTE ERROR\n%s\n%s' %
+    #                     (sql, args))
+    #                 log.error(reason)
+    #                 sys.exit()
+    #     return count
     def insert(self, sql, args=[], num=10000):
-        """
-        批量更新插入，默认超过10000条数据自动commit
-        insertone:
-            self.insert(
-                "insert into test(id) values(:id)",
-                {'id': 6666}
-            )
-        insertmany:
-            self.insert(
-                "insert into test(id) values(:id)",
-                [{'id': 6666}, {'id': 8888}]
-            )
-        @num:
-            批量插入时定义一次插入的数量，默认10000
-        """
-        length = len(args)
-        count = 0
-        try:
-            if (args and not isinstance(args, dict) and
-                    isinstance(args[0], (tuple, list, dict))):
-                for i in range(0, length, num):
-                    rs = self.execute(sql, args[i:i + num])
-                    count += rs.rowcount
-            else:
-                rs = self.execute(sql, args)
-                count = rs.rowcount
-        except DatabaseError as reason:
-            self.rollback()
-            if 'ORA-12899' in str(reason):
-                self._modify_field_size(reason)
-                count += self.insert(sql, args, num)
-            else:
-                if (args and not isinstance(args, dict) and
-                        isinstance(args[0], (tuple, list, dict))):
-                    if num <= 10 or length <= 10:
-                        log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
-                        for record in args[i:i + num]:
-                            self.insert(sql, record)
-                    else:
-                        self.insert(
-                            sql, args[i:i + num],
-                            num=reduce_num(num, length))
-                else:
-                    log.error(
-                        'SQL EXECUTE ERROR\n%s\n%s' %
-                        (sql, args))
-                    log.error(reason)
-                    sys.exit()
-        return count
+        rs = self.execute(sql, args, num)
+        return rs.rowcount
 
     def merge(self, table, args, columns, unique, num=10000):
         param_columns = ','.join([':{0} as {0}'.format(i) for i in columns])
