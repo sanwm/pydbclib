@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import DatabaseError
+from sqlalchemy.exc import DatabaseError, DBAPIError
 from collections import OrderedDict
 from sqlalchemy import engine
 import re
@@ -8,7 +8,7 @@ import os
 import sys
 from py_db.utils import reduce_num
 from py_db.logger import log
-os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
+# os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
 class Connection(object):
@@ -55,7 +55,7 @@ class Connection(object):
     def executeone(self, sql, args):
         try:
             rs = self.session.execute(sql, args)
-        except DatabaseError as reason:
+        except (DatabaseError, DBAPIError) as reason:
             self.rollback()
             log.error('SQL EXECUTE ERROR\n%s\n%s' % (sql, args))
             log.error(reason)
@@ -69,7 +69,7 @@ class Connection(object):
             for i in range(0, length, num):
                 rs = self.session.execute(sql, args[i:i + num])
                 count += rs.rowcount
-        except DatabaseError as reason:
+        except (DatabaseError, DBAPIError) as reason:
             self.rollback()
             if reduce_num(num, length) <= 10 or length <= 10:
                 log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")

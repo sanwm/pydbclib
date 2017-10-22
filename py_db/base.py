@@ -1,7 +1,9 @@
 from collections import OrderedDict
 import sys
+import os
 from py_db.utils import reduce_num
 from py_db.logger import log
+os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
 class Connection(object):
@@ -21,6 +23,10 @@ class Connection(object):
     def create_driver(self):
         self.driver = self.dbapi()
         self.DatabaseError = self.driver.DatabaseError
+        try:
+            self.Error = self.driver.Error
+        except AttributeError:
+            self.Error = self.DatabaseError
 
     def create_con(self, *args, **kwargs):
         return self.driver.connect(*args, **kwargs)
@@ -48,7 +54,7 @@ class Connection(object):
         try:
             self.session.execute(sql, args)
             count = self.session.rowcount
-        except self.DatabaseError as reason:
+        except (self.DatabaseError, self.Error) as reason:
             self.rollback()
             log.error('SQL EXECUTE ERROR\n%s\n%s' % (sql, args))
             log.error(reason)
@@ -62,7 +68,7 @@ class Connection(object):
             for i in range(0, length, num):
                 self.session.executemany(sql, args[i:i + num])
                 count += self.session.rowcount
-        except self.DatabaseError as reason:
+        except (self.DatabaseError, self.Error) as reason:
             self.rollback()
             if reduce_num(num, length) <= 10 or length <= 10:
                 log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
