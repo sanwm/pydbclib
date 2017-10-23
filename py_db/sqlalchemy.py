@@ -219,7 +219,7 @@ class Connection(object):
                                                update_field=update_field,
                                                t1_columns=t1_columns,
                                                t2_columns=t2_columns))
-        log.info(sql)
+        # log.info(sql)
         self.execute(sql, args)
         # length = len(args)
         # for i in range(0, length, num):
