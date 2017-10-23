@@ -29,7 +29,12 @@ class Connection(object):
             self.Error = self.DatabaseError
 
     def create_con(self, *args, **kwargs):
-        return self.driver.connect(*args, **kwargs)
+        try:
+            con = self.driver.connect(*args, **kwargs)
+        except Exception as reason:
+            log.error("%s\nargs:%s, kwargs:%s" % (reason, args, kwargs))
+            sys.exit(1)
+        return con
 
     def create_session(self):
         return self.connect.cursor()

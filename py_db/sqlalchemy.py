@@ -18,12 +18,12 @@ class Connection(object):
         >>>con
         "oracle+cx_oracle://jwdn:password@192.168.152.1:1521/xe"
         """
-        self._eng = con if isinstance(
+        self.connect = con if isinstance(
             con, engine.base.Engine) else create_engine(con, echo=echo)
         self.session = self.create_session()
 
     def create_session(self):
-        DB_Session = sessionmaker(bind=self._eng)
+        DB_Session = sessionmaker(bind=self.connect)
         return DB_Session()
 
     def execute(self, sql, args=[], num=10000):

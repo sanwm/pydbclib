@@ -11,7 +11,7 @@ with open('py_db/__init__.py', 'rb') as f:
 setup(
     name='py_db',
     version=version,
-    install_requires=['sqlalchemy>=1.1.14'],
+    install_requires=['sqlalchemy>=1.1.13'],
     description='python db util',
     classifiers=[
         'License :: OSI Approved :: MIT License',
