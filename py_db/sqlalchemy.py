@@ -43,11 +43,15 @@ class Connection(object):
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (list, tuple, dict))):
             rs = self.executemany(sql, args, num)
-            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
+            # log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
+            if len(args)>2:
+                log.debug("%s\nSQL param:[%s\n           ...\n           %s]" % (sql, args[0], args[-1]))
+            else:
+                log.debug("%s\nSQL param:[%s]" % (sql, '\n           '.join(map(str, args))))
         else:
             rs = self.executeone(sql, args)
             if args:
-                log.debug("%s\n%s" % (sql, args))
+                log.debug("%s\nSQL param:%s" % (sql, args))
             else:
                 log.debug(sql)
         return rs
@@ -57,7 +61,7 @@ class Connection(object):
             rs = self.session.execute(sql, args)
         except (DatabaseError, DBAPIError) as reason:
             self.rollback()
-            log.error('SQL EXECUTE ERROR\n%s\n%s' % (sql, args))
+            log.error('SQL EXECUTE ERROR\n%s\nSQL param:%s' % (sql, args))
             log.error(reason)
             sys.exit(1)
         return rs

@@ -46,11 +46,14 @@ class Connection(object):
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (tuple, list, dict))):
             count = self.executemany(sql, args, num)
-            log.debug("%s\n[%s\n...\n%s]" % (sql, args[0], args[-1]))
+            if len(args)>2:
+                log.debug("%s\nSQL param:[%s\n           ...\n           %s]" % (sql, args[0], args[-1]))
+            else:
+                log.debug("%s\nSQL param:[%s]" % (sql, '\n           '.join(map(str, args))))
         else:
             count = self.executeone(sql, args)
             if args:
-                log.debug("%s\n%s" % (sql, args))
+                log.debug("%s\nSQL param:%s" % (sql, args))
             else:
                 log.debug(sql)
         return count
@@ -61,7 +64,7 @@ class Connection(object):
             count = self.session.rowcount
         except (self.DatabaseError, self.Error) as reason:
             self.rollback()
-            log.error('SQL EXECUTE ERROR\n%s\n%s' % (sql, args))
+            log.error('SQL EXECUTE ERROR\n%s\nSQL param:%s' % (sql, args))
             log.error(reason)
             sys.exit(1)
         return count
