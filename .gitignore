@@ -22,6 +22,8 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+install.bat
+*.exe
 
 # Installer logs
 pip-log.txt
