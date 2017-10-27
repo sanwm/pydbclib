@@ -1,5 +1,8 @@
 py_db: utils used to operate database
 
+'0.0.7'
+1.execute方法重写，将异常捕获统一移到execute中处理
+
 '0.0.6'
 1.log优化, 统一占位符为 ':1'
 
