@@ -1,5 +1,5 @@
 --
-py_db: utils used to operate database
+py_db: a utils used to operate database and can match the common database
 --
 usage
     from py_db import connection
