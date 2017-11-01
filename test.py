@@ -5,7 +5,7 @@ db = connection("oracle://jwdn:password@local:1521/xe", debug=True)
 # db = connection("mysql+pyodbc://:@mysqldb", debug=True)
 # base dbapi module
 # db = connection('DSN=mydb;UID=root;PWD=password', driver="pyodbc")
-# db = connection(con='DSN=oracledb;PWD=password', driver="pyodbc", debug=True)
+# db = connection('DSN=oracledb;PWD=password', driver="pyodbc", debug=True)
 
 
 def basic():
