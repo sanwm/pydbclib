@@ -32,7 +32,7 @@ class Connection(object):
         try:
             con = self.driver.connect(*args, **kwargs)
         except Exception as reason:
-            log.critical("REASON:%s\nargs:%s, kwargs:%s\nEXIT" % (
+            log.critical("REASON(%s)\nargs:%s, kwargs:%s\nEXIT" % (
                 reason, args, kwargs))
             sys.exit(1)
         return con
@@ -49,15 +49,15 @@ class Connection(object):
             count = self.executemany(sql, args, num)
             if len(args) > 2:
                 log.debug(
-                    "%s\nSQL param:[%s\n           ..."
-                    "\n           %s]" % (sql, args[0], args[-1]))
+                    "%s\nParam:[%s\n           ..."
+                    "\n       %s]" % (sql, args[0], args[-1]))
             else:
-                log.debug("%s\nSQL param:[%s]" % (
+                log.debug("%s\nParam:[%s]" % (
                     sql, '\n           '.join(map(str, args))))
         else:
             count = self.executeone(sql, args)
             if args:
-                log.debug("%s\nSQL param:%s" % (sql, args))
+                log.debug("%s\nParam:%s" % (sql, args))
             else:
                 log.debug(sql)
         return count
@@ -68,8 +68,12 @@ class Connection(object):
             count = self.session.rowcount
         except (self.DatabaseError, self.Error) as reason:
             self.rollback()
-            log.error('SQL EXECUTE ERROR\n%s\nSQL param:%s' % (sql, args))
-            log.critical("REASON:%s\nEXIT" % reason)
+            if args:
+                log.error(
+                    'SQL EXECUTE ERROR(SQL: "%s")\nParam:%s' % (sql, args))
+            else:
+                log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
+            log.critical("REASON {%s}\nEXIT" % reason)
             sys.exit(1)
         return count
 

@@ -45,15 +45,15 @@ class Connection(object):
             rs = self.executemany(sql, args, num)
             if len(args) > 2:
                 log.debug(
-                    "%s\nSQL param:[%s\n           ..."
-                    "\n           %s]" % (sql, args[0], args[-1]))
+                    "%s\nParam:[%s\n           ..."
+                    "\n       %s]" % (sql, args[0], args[-1]))
             else:
-                log.debug("%s\nSQL param:[%s]" % (
+                log.debug("%s\nParam:[%s]" % (
                     sql, '\n           '.join(map(str, args))))
         else:
             rs = self.executeone(sql, args)
             if args:
-                log.debug("%s\nSQL param:%s" % (sql, args))
+                log.debug("%s\nParam:%s" % (sql, args))
             else:
                 log.debug(sql)
         return rs
@@ -63,8 +63,12 @@ class Connection(object):
             rs = self.session.execute(sql, args)
         except (DatabaseError, DBAPIError) as reason:
             self.rollback()
-            log.error('SQL EXECUTE ERROR\n%s\nSQL param:%s' % (sql, args))
-            log.critical("REASON:%s\nEXIT" % reason)
+            if args:
+                log.error(
+                    'SQL EXECUTE ERROR(SQL: "%s")\nParam:%s' % (sql, args))
+            else:
+                log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
+            log.critical("REASON {%s}\nEXIT" % reason)
             sys.exit(1)
         return rs
 
