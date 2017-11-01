@@ -2,8 +2,9 @@
 py_db: utils used to operate database
 --
 use
-    base dbapi module
+    from py_db import connection
+    # base dbapi module
     db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle", debug=True)
-    or
-    sqlalchemy module
+
+    # sqlalchemy module
     db = connection("oracle://jwdn:password@local:1521/xe", debug=True)
