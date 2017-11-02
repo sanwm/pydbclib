@@ -104,6 +104,15 @@ class Connection(object):
             res = self.session.fetchmany(chunksize)
 
     def query(self, sql, args=[], size=None):
+        """
+        Args:
+            sql: str
+            args: list or dict
+        Returns:
+            list
+        Raises:
+            None
+        """
         if size is None:
             self.execute(sql, args)
             res = [tuple(i) for i in self.session.fetchall()]
