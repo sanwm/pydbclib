@@ -84,7 +84,7 @@ class Connection(object):
             if reduce_num(num, length) <= 10 or length <= 10:
                 log.warn("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
                 for record in args[i:i + num]:
-                    self.executeone(sql, record)
+                    rs = self.executeone(sql, record)
             else:
                 self.executemany(
                     sql, args[i:i + num],
