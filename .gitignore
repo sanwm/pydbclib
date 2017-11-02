@@ -22,7 +22,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-install.bat
+install.*
 *.exe
 
 # Installer logs
