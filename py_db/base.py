@@ -182,7 +182,7 @@ class Connection(object):
         # self.oracle_merge(table, args, columns, unique, num)
         if (not args or not isinstance(args, (tuple, list))
                 or not isinstance(args[0], dict)):
-            log.error("args 形式错误，必须是字典的list集合 for example([{'a':1},{'b':2}])")
+            log.error("args 形式错误，必须是字典的list集合 for example([{'id':1},{'name':'te'}])")
         param = []
         columns = [i for i in args[0].keys()]
         for r in args:

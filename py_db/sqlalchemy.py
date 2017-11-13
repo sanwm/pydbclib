@@ -210,7 +210,58 @@ class Connection(object):
         rs = self.execute(sql, args, num)
         return rs.rowcount
 
-    def merge(self, table, args, columns, unique, num=10000):
+    # def merge(self, table, args, columns, unique, num=10000):
+    #     param_columns = ','.join([':{0} as {0}'.format(i) for i in columns])
+    #     update_field = ','.join(
+    #         ['t1.{0}=t2.{0}'.format(i) for i in columns if i != unique])
+    #     t1_columns = ','.join(['t1.{0}'.format(i) for i in columns])
+    #     t2_columns = ','.join(['t2.{0}'.format(i) for i in columns])
+    #     sql = ("MERGE INTO {table} t1"
+    #            " USING (SELECT {param_columns} FROM dual) t2"
+    #            " ON (t1.{unique}= t2.{unique})"
+    #            " WHEN MATCHED THEN"
+    #            " UPDATE SET {update_field}"
+    #            " WHEN NOT MATCHED THEN"
+    #            " INSERT ({t1_columns})"
+    #            " VALUES ({t2_columns})".format(table=table,
+    #                                            param_columns=param_columns,
+    #                                            unique=unique,
+    #                                            update_field=update_field,
+    #                                            t1_columns=t1_columns,
+    #                                            t2_columns=t2_columns))
+    #     self.execute(sql, args)
+    #     # length = len(args)
+    #     # for i in range(0, length, num):
+    #     #     self.execute(sql, args[i:i + num])
+
+    def merge(self, table, args, unique, num=10000, db_type="oracle"):
+        # try:
+        #     self.connect.execute("select count(1) from user_objects")
+        # except:
+        #     self.mysql_merge(table, args, columns, unique, num)
+        # self.oracle_merge(table, args, columns, unique, num)
+        if (not args or not isinstance(args, (tuple, list))
+                or not isinstance(args[0], dict)):
+            log.error("args 形式错误，必须是字典的list集合 for example([{'a':1},{'b':2}])")
+        db = db_type.lower()
+        columns = [i for i in args[0].keys()]
+        if db != "oracle":
+            param = []
+            for r in args:
+                param.append([r[j] for j in columns])
+        if db == "oracle":
+            self.oracle_merge(table, args, columns, unique, num)
+        elif db == "mysql":
+            self.mysql_merge(table, param, columns, unique, num)
+        elif db == "postgressql":
+            self.postgressql_merge(table, param, columns, unique, num)
+        else:
+            log.error('%s database do not supper merge method')
+            sys.exit(1)
+
+    def oracle_merge(self, table, args, columns, unique, num=10000):
+        columns = [i.lower() for i in columns]
+        unique = unique.lower()
         param_columns = ','.join([':{0} as {0}'.format(i) for i in columns])
         update_field = ','.join(
             ['t1.{0}=t2.{0}'.format(i) for i in columns if i != unique])
@@ -229,10 +280,52 @@ class Connection(object):
                                                update_field=update_field,
                                                t1_columns=t1_columns,
                                                t2_columns=t2_columns))
+        print(sql)
         self.execute(sql, args)
-        # length = len(args)
-        # for i in range(0, length, num):
-        #     self.execute(sql, args[i:i + num])
+
+    def mysql_merge(self, table, args, columns, unique, num=10000):
+        columns = [i.lower() for i in columns]
+        unique = unique.lower()
+        param = []
+        values = ','.join([':1' for _ in columns])
+        update_field = ','.join(["%s=:1" % i for i in columns if i != unique])
+        sql = ("INSERT INTO {table}({columns}) "
+               "VALUES({values}) "
+               "ON DUPLICATE KEY "
+               "UPDATE {update_field}".format(table=table,
+                                              columns=','.join(columns),
+                                              values=values,
+                                              update_field=update_field))
+        idx = columns.index(unique)
+        idx_list = [i for i in range(len(columns)) if i != idx]
+        for record in args:
+            for i in idx_list:
+                record = list(record)
+                record.append(record[i])
+            param.append(record)
+        self.execute(sql, param)
+
+    def postgressql_merge(self, table, args, columns, unique, num=10000):
+        columns = [i.lower() for i in columns]
+        unique = unique.lower()
+        param = []
+        values = ','.join([':1' for _ in columns])
+        update_field = ','.join(["%s=:1" % i for i in columns if i != unique])
+        sql = ("INSERT INTO {table}({columns}) "
+               "VALUES({values}) "
+               "ON conflict({unique})"
+               "DO UPDATE SET {update_field}".format(table=table, unique=unique,
+                                                     columns=','.join(columns),
+                                                     values=values,
+                                                     update_field=update_field))
+        idx = columns.index(unique)
+        idx_list = [i for i in range(len(columns)) if i != idx]
+        for record in args:
+            for i in idx_list:
+                record = list(record)
+                record.append(record[i])
+            param.append(record)
+        self.execute(sql, param)
 
     def delete_repeat(self, table, unique, cp_field="rowid"):
         """
