@@ -11,6 +11,8 @@ class Connection(object):
     def __init__(self, *args, **kwargs):
         self.driver_name = kwargs.get("driver")
         kwargs.pop('driver')
+        self.placeholder = kwargs.get("placeholder", '?')
+        kwargs.pop('placeholder', None)
         # print(args, kwargs)
         self.create_driver()
         self.connect = self.create_con(*args, **kwargs)
@@ -45,28 +47,32 @@ class Connection(object):
     def execute(self, sql, args=[], num=10000):
         if (":1" in sql and '?' not in sql and
                 self.driver_name != "cx_Oracle"):
-            sql = sql.replace(":1", "?")
+            sql = sql.replace(":1", self.placeholder)
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (tuple, list, dict))):
             count = self.executemany(sql, args, num)
-            if len(args) > 2:
-                log.debug(
-                    "%s\nParam:[%s\n           ..."
-                    "\n       %s]" % (sql, args[0], args[-1]))
-            else:
-                log.debug("%s\nParam:[%s]" % (
-                    sql, '\n           '.join(map(str, args))))
+            # if len(args) > 2:
+            #     log.debug(
+            #         "%s\nParam:[%s\n           ..."
+            #         "\n       %s]" % (sql, args[0], args[-1]))
+            # else:
+            #     log.debug("%s\nParam:[%s]" % (
+            #         sql, '\n           '.join(map(str, args))))
         else:
             count = self.executeone(sql, args)
-            if args:
-                log.debug("%s\nParam:%s" % (sql, args))
-            else:
-                log.debug(sql)
+            # if args:
+            #     log.debug("%s\nParam:%s" % (sql, args))
+            # else:
+            #     log.debug(sql)
         return count
 
     def executeone(self, sql, args):
         try:
             self.session.execute(sql, args)
+            if args:
+                log.debug("%s\nParam:%s" % (sql, args))
+            else:
+                log.debug(sql)
             count = self.session.rowcount
         except (self.DatabaseError, self.Error) as reason:
             self.rollback()
@@ -85,10 +91,18 @@ class Connection(object):
         try:
             for i in range(0, length, num):
                 self.session.executemany(sql, args[i:i + num])
+                if len(args) > 2:
+                    log.debug(
+                        "%s\nParam:[%s\n           ..."
+                        "\n       %s]" % (sql, args[0], args[-1]))
+                else:
+                    log.debug("%s\nParam:[%s]" % (
+                        sql, '\n       '.join(map(str, args))))
                 count += self.session.rowcount
         except (self.DatabaseError, self.Error) as reason:
             self.rollback()
-            if reduce_num(num, length) <= 10 or length <= 10:
+            if num <= 10 or length <= 10:
+                log.warn(reduce_num(num, length))
                 log.warn("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
                 for record in args[i:i + num]:
                     self.executeone(sql, record)
@@ -175,11 +189,6 @@ class Connection(object):
         return self.execute(sql, args, num)
 
     def merge(self, table, args, unique, num=10000, db_type="oracle"):
-        # try:
-        #     self.connect.execute("select count(1) from user_objects")
-        # except:
-        #     self.mysql_merge(table, args, columns, unique, num)
-        # self.oracle_merge(table, args, columns, unique, num)
         if (not args or not isinstance(args, (tuple, list))
                 or not isinstance(args[0], dict)):
             log.error("args 形式错误，必须是字典的list集合 for example([{'id':1},{'name':'te'}])")
@@ -225,8 +234,8 @@ class Connection(object):
         columns = [i.lower() for i in columns]
         unique = unique.lower()
         param = []
-        values = ','.join(['?' for _ in columns])
-        update_field = ','.join(["%s=?" % i for i in columns if i != unique])
+        values = ','.join([self.placeholder for _ in columns])
+        update_field = ','.join(["%s=%s" % (i, self.placeholder) for i in columns if i != unique])
         sql = ("INSERT INTO {table}({columns}) "
                "VALUES({values}) "
                "ON DUPLICATE KEY "
@@ -247,8 +256,8 @@ class Connection(object):
         columns = [i.lower() for i in columns]
         unique = unique.lower()
         param = []
-        values = ','.join(['?' for _ in columns])
-        update_field = ','.join(["%s=?" % i for i in columns if i != unique])
+        values = ','.join([self.placeholder for _ in columns])
+        update_field = ','.join(["%s=%s" % (i, self.placeholder) for i in columns if i != unique])
         sql = ("INSERT INTO {table}({columns}) "
                "VALUES({values}) "
                "ON conflict({unique})"
@@ -288,6 +297,10 @@ class Connection(object):
         count = self.session.rowcount
         log.info('删除重复数据：%s' % count)
         return count
+
+    def empty(self, table):
+        sql = "truncate table %s" % table
+        db.insert(sql)
 
     def description(self):
         return self.session.description

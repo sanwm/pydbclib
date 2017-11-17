@@ -24,8 +24,6 @@ def basic(db, db_type):
     finally:
         db.execute('drop table py_db_test')
 
-    print('SUCCESS')
-
 
 def sqlalchemy_test():
     db = connection("oracle://jwdn:password@local:1521/xe", debug=True)
@@ -43,11 +41,14 @@ def base_test():
     basic(db, 'oracle')
     db = connection('DSN=mysqldb', driver="pyodbc") # 'DSN=mydb;UID=root;PWD=password'
     basic(db, 'mysql')
+    db = connection(host='centos', user='root', password='password', database='awesome', charset='utf8', driver="pymysql", placeholder='%s')
+    basic(db, 'mysql')
 
 
 def main():
     base_test()
     sqlalchemy_test()
+    print('SUCCESS')
 
 
 if __name__ == '__main__':

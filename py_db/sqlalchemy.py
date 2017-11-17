@@ -43,24 +43,28 @@ class Connection(object):
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (list, tuple, dict))):
             rs = self.executemany(sql, args, num)
-            if len(args) > 2:
-                log.debug(
-                    "%s\nParam:[%s\n           ..."
-                    "\n       %s]" % (sql, args[0], args[-1]))
-            else:
-                log.debug("%s\nParam:[%s]" % (
-                    sql, '\n           '.join(map(str, args))))
+            # if len(args) > 2:
+            #     log.debug(
+            #         "%s\nParam:[%s\n           ..."
+            #         "\n       %s]" % (sql, args[0], args[-1]))
+            # else:
+            #     log.debug("%s\nParam:[%s]" % (
+            #         sql, '\n       '.join(map(str, args))))
         else:
             rs = self.executeone(sql, args)
-            if args:
-                log.debug("%s\nParam:%s" % (sql, args))
-            else:
-                log.debug(sql)
+            # if args:
+            #     log.debug("%s\nParam:%s" % (sql, args))
+            # else:
+            #     log.debug(sql)
         return rs
 
     def executeone(self, sql, args):
         try:
             rs = self.session.execute(sql, args)
+            if args:
+                log.debug("%s\nParam:%s" % (sql, args))
+            else:
+                log.debug(sql)
         except (DatabaseError, DBAPIError) as reason:
             self.rollback()
             if args:
@@ -78,10 +82,17 @@ class Connection(object):
         try:
             for i in range(0, length, num):
                 rs = self.session.execute(sql, args[i:i + num])
+                if len(args) > 2:
+                    log.debug(
+                        "%s\nParam:[%s\n           ..."
+                        "\n       %s]" % (sql, args[0], args[-1]))
+                else:
+                    log.debug("%s\nParam:[%s]" % (
+                        sql, '\n       '.join(map(str, args))))
                 count += rs.rowcount
         except (DatabaseError, DBAPIError) as reason:
             self.rollback()
-            if reduce_num(num, length) <= 10 or length <= 10:
+            if num <= 10 or length <= 10:
                 log.warn("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
                 for record in args[i:i + num]:
                     rs = self.executeone(sql, record)
@@ -210,36 +221,7 @@ class Connection(object):
         rs = self.execute(sql, args, num)
         return rs.rowcount
 
-    # def merge(self, table, args, columns, unique, num=10000):
-    #     param_columns = ','.join([':{0} as {0}'.format(i) for i in columns])
-    #     update_field = ','.join(
-    #         ['t1.{0}=t2.{0}'.format(i) for i in columns if i != unique])
-    #     t1_columns = ','.join(['t1.{0}'.format(i) for i in columns])
-    #     t2_columns = ','.join(['t2.{0}'.format(i) for i in columns])
-    #     sql = ("MERGE INTO {table} t1"
-    #            " USING (SELECT {param_columns} FROM dual) t2"
-    #            " ON (t1.{unique}= t2.{unique})"
-    #            " WHEN MATCHED THEN"
-    #            " UPDATE SET {update_field}"
-    #            " WHEN NOT MATCHED THEN"
-    #            " INSERT ({t1_columns})"
-    #            " VALUES ({t2_columns})".format(table=table,
-    #                                            param_columns=param_columns,
-    #                                            unique=unique,
-    #                                            update_field=update_field,
-    #                                            t1_columns=t1_columns,
-    #                                            t2_columns=t2_columns))
-    #     self.execute(sql, args)
-    #     # length = len(args)
-    #     # for i in range(0, length, num):
-    #     #     self.execute(sql, args[i:i + num])
-
     def merge(self, table, args, unique, num=10000, db_type="oracle"):
-        # try:
-        #     self.connect.execute("select count(1) from user_objects")
-        # except:
-        #     self.mysql_merge(table, args, columns, unique, num)
-        # self.oracle_merge(table, args, columns, unique, num)
         if (not args or not isinstance(args, (tuple, list))
                 or not isinstance(args[0], dict)):
             log.error("args 形式错误，必须是字典的list集合 for example([{'a':1},{'b':2}])")
@@ -280,7 +262,6 @@ class Connection(object):
                                                update_field=update_field,
                                                t1_columns=t1_columns,
                                                t2_columns=t2_columns))
-        print(sql)
         self.execute(sql, args)
 
     def mysql_merge(self, table, args, columns, unique, num=10000):
@@ -349,6 +330,10 @@ class Connection(object):
         count = rs.rowcount
         log.info('删除重复数据：%s' % count)
         return count
+
+    def empty(self, table):
+        sql = "truncate table %s" % table
+        db.insert(sql)
 
     def rollback(self):
         """

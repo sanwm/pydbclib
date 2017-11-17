@@ -15,7 +15,7 @@ class ObjEncoder(json.JSONEncoder):
 def reduce_num(n, l):
     num = min(n, l)
     if num > 10:
-        return num % 10
+        return num // 10
     else:
         return 1
 
