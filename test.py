@@ -1,53 +1,83 @@
-from py_db import connection
+from py_db import connection, connect_simple
+debug = True
 
-
-def basic(db, db_type):
+def basic(db, db_type=None):
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
-        db.insert("insert into py_db_test(id,foo,bar) values('1','hello','中国')")
-        sql = "select foo,bar from py_db_test where id=:1"
-        rs1 = db.query(sql, ['1'])
+        db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
+        sql1 = "select foo,bar from py_db_test where id=:1"
+        sql = "select id,foo,bar from py_db_test"
+        rs1 = db.query(sql1, ['1'])
         print(rs1)
         db.insert(
             "insert into py_db_test(id,foo,bar) values(:1,:1,:1)",
-            ['2', 'abc', '一二三'])
+            ['bbb', 'abc', '一二三'])
         db.insert(
             "insert into py_db_test(id,foo,bar) values(:1,:1,:1)",
-            [('11', 'a', '一'), ('22', 'b', '二')])
-        db.merge(
-            'py_db_test',
-            [{'id': '11', 'foo': 'a', 'bar': '1'}, {'id': '33', 'foo':'b', 'bar':'二'}],
-            'id', db_type=db_type)
-        sql = "select id,foo,bar from py_db_test"
-        rs2 = db.query(sql)
-        print(rs2)
+            [('1', 'a', '一'), ('2', 'b', '二')])
+        print(db.query(sql))
+        param = [{'id': '1', 'foo': 'a', 'bar': 'one'},
+                 {'id': '2', 'foo': 'b', 'bar': 'two'},
+                 {'id': '3', 'foo':'c', 'bar':'three'}]
+        db.merge('py_db_test', param, 'id', db_type=db_type)
+        print(db.query(sql))
     finally:
         db.execute('drop table py_db_test')
 
 
 def sqlalchemy_test():
-    db = connection("oracle://jwdn:password@local:1521/xe", debug=True)
+    db = connection("oracle://jwdn:password@local:1521/xe", debug=debug)
     basic(db, 'oracle')
-    db = connection("mysql+pyodbc://:@mysqldb", debug=True)
+    db = connection("mysql+pyodbc://:@mysqldb", debug=debug)
     basic(db, 'mysql')
-    db = connection("mysql+pymysql://root:password@192.168.152.200:3306/awesome?charset=utf8", debug=True)
+    db = connection(
+        "mysql+pymysql://root:password@centos:3306/awesome?charset=utf8",
+        debug=debug)
     basic(db, 'mysql')
 
 
 def base_test():
-    db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle", debug=True)
+    db = connection(
+        'jwdn/password@local:1521/xe',
+        driver="cx_Oracle", debug=debug)
     basic(db, 'oracle')
-    db = connection('DSN=oracledb;PWD=password', driver="pyodbc", debug=True)
+    db = connection('DSN=oracledb;PWD=password', driver="pyodbc", debug=debug)
     basic(db, 'oracle')
-    db = connection('DSN=mysqldb', driver="pyodbc") # 'DSN=mydb;UID=root;PWD=password'
+    # 'DSN=mydb;UID=root;PWD=password'
+    db = connection('DSN=mysqldb', driver="pyodbc")
     basic(db, 'mysql')
-    db = connection(host='centos', user='root', password='password', database='awesome', charset='utf8', driver="pymysql", placeholder='%s')
+    db = connection(
+        host='centos',
+        user='root',
+        password='password',
+        database='awesome',
+        charset='utf8',
+        driver="pymysql",
+        debug=debug,
+        placeholder='%s')
     basic(db, 'mysql')
+
+
+def connect_test():
+    kw = {
+    "uri": 'jwdn/password@local:1521/xe',
+    'driver': "cx_Oracle",
+    'debug': debug
+    }
+    db = connect_simple(kw)
+    basic(db)
+    kw = {
+    "uri": 'mysql+pymysql://root:password@centos:3306/awesome?charset=utf8',
+    'debug': debug
+    }
+    db = connect_simple(kw)
+    basic(db)
 
 
 def main():
     base_test()
     sqlalchemy_test()
+    connect_test()
     print('SUCCESS')
 
 

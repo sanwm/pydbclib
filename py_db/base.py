@@ -153,50 +153,20 @@ class Connection(object):
         else:
             return self._query_dict_generator(sql, Dict, args, size)
 
-    # def insert(self, sql, args=[], num=10000):
-    #     length = len(args)
-    #     count = 0
-    #     try:
-    #         if (args and not isinstance(args, dict) and
-    #                 isinstance(args[0], (tuple, list, dict))):
-    #             for i in range(0, length, num):
-    #                 self.execute(sql, args[i:i + num])
-    #                 count += self.session.rowcount
-    #         else:
-    #             self.execute(sql, args)
-    #             count = self.session.rowcount
-    #     except self.DatabaseError as reason:
-    #         self.rollback()
-    #         if (args and not isinstance(args, dict) and
-    #                 isinstance(args[0], (tuple, list, dict))):
-    #             if reduce_num(num, length) <= 10 or length <= 10:
-    #                 log.error("SQL EXECUTEMANY ERROR EXECUTE EVERYONE")
-    #                 for record in args[i:i + num]:
-    #                     self.insert(sql, record)
-    #             else:
-    #                 self.insert(
-    #                     sql, args[i:i + num],
-    #                     num=reduce_num(num, length))
-    #         else:
-    #             log.error(
-    #                 'SQL EXECUTE ERROR\n%s\n%s' %
-    #                 (sql, args))
-    #             print(type(str(reason)))
-    #             raise ValueError()
-    #             # sys.exit(0)
-    #     return count
     def insert(self, sql, args=[], num=10000):
         return self.execute(sql, args, num)
 
-    def merge(self, table, args, unique, num=10000, db_type="oracle"):
+    def merge(self, table, args, unique, num=10000, db_type=None):
         if (not args or not isinstance(args, (tuple, list))
                 or not isinstance(args[0], dict)):
-            log.error("args 形式错误，必须是字典的list集合 for example([{'id':1},{'name':'te'}])")
+            log.error("args 形式错误，必须是字典集合 for example([{'id':1},{'name':'te'}])")
         param = []
+        keys = []
         columns = [i for i in args[0].keys()]
         for r in args:
             param.append([r[j] for j in columns])
-        db = db_type.lower()
+            keys.append([r[unique]])
+        db = db_type.lower() if db_type else None
         if db == "oracle":
             self.oracle_merge(table, param, columns, unique, num)
         elif db == "mysql":
@@ -204,8 +174,9 @@ class Connection(object):
         elif db == "postgressql":
             self.postgressql_merge(table, param, columns, unique, num)
         else:
-            log.error('%s database do not supper merge method')
-            sys.exit(1)
+            # log.error('%s database do not supper merge method')
+            # sys.exit(1)
+            self.common_merge(table, param, columns, keys, unique, num)
 
     def oracle_merge(self, table, args, columns, unique, num=10000):
         columns = [i.lower() for i in columns]
@@ -273,6 +244,18 @@ class Connection(object):
                 record.append(record[i])
             param.append(record)
         self.execute(sql, param)
+
+    def common_merge(self, table, args, columns, keys, unique, num=10000):
+        columns = [i.lower() for i in columns]
+        unique = unique.lower()
+        self.execute("delete from %s where %s=:1" % (table, unique), keys)
+        values = ','.join([':1' for _ in columns])
+        sql = ("INSERT INTO {table}({columns}) "
+               "VALUES({values}) ".format(
+            table=table, unique=unique,
+            columns=','.join(columns),
+            values=values))
+        self.execute(sql, args)
 
     def delete_repeat(self, table, unique, cp_field="rowid"):
         """

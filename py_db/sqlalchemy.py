@@ -221,16 +221,18 @@ class Connection(object):
         rs = self.execute(sql, args, num)
         return rs.rowcount
 
-    def merge(self, table, args, unique, num=10000, db_type="oracle"):
+    def merge(self, table, args, unique, num=10000, db_type=None):
         if (not args or not isinstance(args, (tuple, list))
                 or not isinstance(args[0], dict)):
             log.error("args 形式错误，必须是字典的list集合 for example([{'a':1},{'b':2}])")
-        db = db_type.lower()
+        db = db_type.lower() if db_type else None
         columns = [i for i in args[0].keys()]
         if db != "oracle":
             param = []
+            keys = []
             for r in args:
                 param.append([r[j] for j in columns])
+                keys.append([r[unique]])
         if db == "oracle":
             self.oracle_merge(table, args, columns, unique, num)
         elif db == "mysql":
@@ -238,8 +240,9 @@ class Connection(object):
         elif db == "postgressql":
             self.postgressql_merge(table, param, columns, unique, num)
         else:
-            log.error('%s database do not supper merge method')
-            sys.exit(1)
+            # log.error('%s database do not supper merge method')
+            # sys.exit(1)
+            self.common_merge(table, param, columns, keys, unique, num)
 
     def oracle_merge(self, table, args, columns, unique, num=10000):
         columns = [i.lower() for i in columns]
@@ -307,6 +310,18 @@ class Connection(object):
                 record.append(record[i])
             param.append(record)
         self.execute(sql, param)
+
+    def common_merge(self, table, args, columns, keys, unique, num=10000):
+        columns = [i.lower() for i in columns]
+        unique = unique.lower()
+        self.execute("delete from %s where %s=:1" % (table, unique), keys)
+        values = ','.join([':1' for _ in columns])
+        sql = ("INSERT INTO {table}({columns}) "
+               "VALUES({values}) ".format(
+            table=table, unique=unique,
+            columns=','.join(columns),
+            values=values))
+        self.execute(sql, args)
 
     def delete_repeat(self, table, unique, cp_field="rowid"):
         """

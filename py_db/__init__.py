@@ -34,3 +34,12 @@ def connection(*args, **kwargs):
     else:
         from . import base
         return base.Connection(*args, **kwargs)
+
+
+def connect_simple(uri):
+    if isinstance(uri, str):
+        return connection(uri)
+    else:
+        uri = uri.copy()
+        args = [uri.pop('uri', ())]
+        return connection(*args, **uri)
