@@ -7,6 +7,7 @@ import re
 import os
 import sys
 from py_db.utils import reduce_num
+from py_db.sql import handle
 from py_db.logger import log
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
@@ -26,36 +27,44 @@ class Connection(object):
         DB_Session = sessionmaker(bind=self.connect)
         return DB_Session()
 
+    # def execute(self, sql, args=[], num=10000):
+    #     """
+    #     执行sql
+    #     """
+    #     if (':1' in sql and args and isinstance(args, (list, tuple)) and
+    #             not isinstance(args[0], dict)):
+    #         num = sql.count(':1')
+    #         sql = sql.replace(':1', '{}').format(
+    #             *[':%s' % i for i in range(num)])
+    #         keys = [str(i) for i in range(num)]
+    #         if isinstance(args[0], (list, tuple)):
+    #             args = [dict(zip(keys, i)) for i in args]
+    #         else:
+    #             args = dict(zip(keys, args))
+    #     if (args and not isinstance(args, dict) and
+    #             isinstance(args[0], (list, tuple, dict))):
+    #         rs = self.executemany(sql, args, num)
+    #     else:
+    #         rs = self.executeone(sql, args)
+    #     return rs
     def execute(self, sql, args=[], num=10000):
         """
         执行sql
         """
-        if (':1' in sql and args and isinstance(args, (list, tuple)) and
-                not isinstance(args[0], dict)):
-            num = sql.count(':1')
-            sql = sql.replace(':1', '{}').format(
-                *[':%s' % i for i in range(num)])
-            keys = [str(i) for i in range(num)]
+        is_list = (':' in sql and args and isinstance(args, (list, tuple)) and
+            not isinstance(args[0], dict))
+        is_many = (args and not isinstance(args, dict) and
+            isinstance(args[0], (list, tuple, dict)))
+        if is_list:
+            sql, keys = handle(sql)
             if isinstance(args[0], (list, tuple)):
                 args = [dict(zip(keys, i)) for i in args]
             else:
                 args = dict(zip(keys, args))
-        if (args and not isinstance(args, dict) and
-                isinstance(args[0], (list, tuple, dict))):
+        if is_many:
             rs = self.executemany(sql, args, num)
-            # if len(args) > 2:
-            #     log.debug(
-            #         "%s\nParam:[%s\n           ..."
-            #         "\n       %s]" % (sql, args[0], args[-1]))
-            # else:
-            #     log.debug("%s\nParam:[%s]" % (
-            #         sql, '\n       '.join(map(str, args))))
         else:
             rs = self.executeone(sql, args)
-            # if args:
-            #     log.debug("%s\nParam:%s" % (sql, args))
-            # else:
-            #     log.debug(sql)
         return rs
 
     def executeone(self, sql, args):

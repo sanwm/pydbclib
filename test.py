@@ -34,6 +34,12 @@ def sqlalchemy_test():
         "mysql+pymysql://root:password@centos:3306/awesome?charset=utf8",
         debug=debug)
     basic(db, 'mysql')
+    kw = {
+        "uri": 'mysql+pymysql://root:password@centos:3306/awesome?charset=utf8'
+        # 'debug': debug
+    }
+    db = connect_simple(kw)
+    basic(db)
 
 
 def base_test():
@@ -56,28 +62,18 @@ def base_test():
         debug=debug,
         placeholder='%s')
     basic(db, 'mysql')
-
-
-def connect_test():
     kw = {
-    "uri": 'jwdn/password@local:1521/xe',
-    'driver': "cx_Oracle",
-    'debug': debug
-    }
-    db = connect_simple(kw)
-    basic(db)
-    kw = {
-    "uri": 'mysql+pymysql://root:password@centos:3306/awesome?charset=utf8',
-    'debug': debug
+        "uri": 'jwdn/password@local:1521/xe',
+        'driver': "cx_Oracle",
+        'debug': debug
     }
     db = connect_simple(kw)
     basic(db)
 
 
 def main():
-    base_test()
+    # base_test()
     sqlalchemy_test()
-    connect_test()
     print('SUCCESS')
 
 

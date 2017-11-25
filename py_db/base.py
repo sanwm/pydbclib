@@ -33,8 +33,6 @@ class Connection(object):
     def create_con(self, *args, **kwargs):
         try:
             con = self.driver.connect(*args, **kwargs)
-            # print(dir(con))
-            # print(con.module)
         except Exception as reason:
             log.critical("REASON(%s)\nargs:%s, kwargs:%s\nEXIT" % (
                 reason, args, kwargs))
@@ -51,19 +49,8 @@ class Connection(object):
         if (args and not isinstance(args, dict) and
                 isinstance(args[0], (tuple, list, dict))):
             count = self.executemany(sql, args, num)
-            # if len(args) > 2:
-            #     log.debug(
-            #         "%s\nParam:[%s\n           ..."
-            #         "\n       %s]" % (sql, args[0], args[-1]))
-            # else:
-            #     log.debug("%s\nParam:[%s]" % (
-            #         sql, '\n           '.join(map(str, args))))
         else:
             count = self.executeone(sql, args)
-            # if args:
-            #     log.debug("%s\nParam:%s" % (sql, args))
-            # else:
-            #     log.debug(sql)
         return count
 
     def executeone(self, sql, args):
