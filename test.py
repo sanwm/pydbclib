@@ -5,9 +5,9 @@ def basic(db, db_type=None):
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
         db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
-        sql1 = "select foo,bar from py_db_test where id=:1"
+        sql1 = "select id,foo,bar from py_db_test where id=:a and foo=:a"
         sql = "select id,foo,bar from py_db_test"
-        rs1 = db.query(sql1, ['1'])
+        rs1 = db.query(sql1, {'a': '1'})
         print(rs1)
         db.insert(
             "insert into py_db_test(id,foo,bar) values(:1,:1,:1)",
@@ -35,8 +35,8 @@ def sqlalchemy_test():
         debug=debug)
     basic(db, 'mysql')
     kw = {
-        "uri": 'mysql+pymysql://root:password@centos:3306/awesome?charset=utf8'
-        # 'debug': debug
+        "uri": 'mysql+pymysql://root:password@centos:3306/awesome?charset=utf8',
+        'debug': debug
     }
     db = connect_simple(kw)
     basic(db)
@@ -72,10 +72,12 @@ def base_test():
 
 
 def main():
-    # base_test()
-    sqlalchemy_test()
+    base_test()
+    # sqlalchemy_test()
     print('SUCCESS')
 
 
 if __name__ == '__main__':
     main()
+    db = connection('DSN=mysqldb', driver="pyodbc")
+    print(db.query("select * from py_etl where id=?", [111]))

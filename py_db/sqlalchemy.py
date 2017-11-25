@@ -233,7 +233,7 @@ class Connection(object):
     def merge(self, table, args, unique, num=10000, db_type=None):
         if (not args or not isinstance(args, (tuple, list))
                 or not isinstance(args[0], dict)):
-            log.error("args 形式错误，必须是字典的list集合 for example([{'a':1},{'b':2}])")
+            log.error("args 形式错误，必须是字典集合 for example([{'a':1},{'b':2}])")
         db = db_type.lower() if db_type else None
         columns = [i for i in args[0].keys()]
         if db != "oracle":

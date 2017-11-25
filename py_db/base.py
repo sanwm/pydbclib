@@ -2,6 +2,8 @@ from collections import OrderedDict
 import sys
 import os
 from py_db.utils import reduce_num
+from py_db.default import place_holder
+from py_db.sql import handle
 from py_db.logger import log
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
@@ -11,7 +13,7 @@ class Connection(object):
     def __init__(self, *args, **kwargs):
         self.driver_name = kwargs.get("driver")
         kwargs.pop('driver')
-        self.placeholder = kwargs.get("placeholder", '?')
+        self.placeholder = kwargs.get("placeholder", place_holder.get(self.driver_name, "?"))
         kwargs.pop('placeholder', None)
         # print(args, kwargs)
         self.create_driver()
@@ -42,12 +44,32 @@ class Connection(object):
     def create_session(self):
         return self.connect.cursor()
 
+    # def execute(self, sql, args=[], num=10000):
+    #     if (":" in sql and '?' not in sql and
+    #             self.driver_name != "cx_Oracle"):
+    #         sql = sql.replace(":1", self.placeholder)
+    #     if (args and not isinstance(args, dict) and
+    #             isinstance(args[0], (tuple, list, dict))):
+    #         count = self.executemany(sql, args, num)
+    #     else:
+    #         count = self.executeone(sql, args)
+    #     return count
     def execute(self, sql, args=[], num=10000):
-        if (":1" in sql and '?' not in sql and
-                self.driver_name != "cx_Oracle"):
-            sql = sql.replace(":1", self.placeholder)
-        if (args and not isinstance(args, dict) and
-                isinstance(args[0], (tuple, list, dict))):
+        is_many = (args and not isinstance(args, dict) and
+            isinstance(args[0], (tuple, list, dict)))
+        need_handle = (":" in sql and ":" not in self.placeholder and args)
+        if need_handle:
+            # is_list = (args and isinstance(args, (list, tuple)) and
+            #     not isinstance(args[0], dict))
+            sql, keys = handle(sql, self.placeholder)
+            if isinstance(args, dict):
+                args = [args[i] for i in keys]
+            elif isinstance(args, (list, tuple)) and isinstance(args[0], dict):
+                tmp = []
+                for record in args:
+                    tmp.append([record[i] for i in keys])
+                args = tmp
+        if is_many:
             count = self.executemany(sql, args, num)
         else:
             count = self.executeone(sql, args)
@@ -155,7 +177,7 @@ class Connection(object):
             keys.append([r[unique]])
         db = db_type.lower() if db_type else None
         if db == "oracle":
-            self.oracle_merge(table, param, columns, unique, num)
+            self.oracle_merge(table, args, columns, unique, num)
         elif db == "mysql":
             self.mysql_merge(table, param, columns, unique, num)
         elif db == "postgressql":
@@ -186,6 +208,7 @@ class Connection(object):
                                                update_field=update_field,
                                                t1_columns=t1_columns,
                                                t2_columns=t2_columns))
+        print('merge', sql, args)
         self.execute(sql, args)
 
     def mysql_merge(self, table, args, columns, unique, num=10000):
