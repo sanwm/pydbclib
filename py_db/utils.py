@@ -1,7 +1,7 @@
 import json
 import functools
 import time
-from py_db.logger import log
+from py_db.logger import instance_log
 
 
 class ObjEncoder(json.JSONEncoder):
@@ -28,9 +28,10 @@ def run_time(func):
     def wrapper(*args, **kw):
         T = time.time()
         rs = func(*args, **kw)
-        log.info('function [%s] run: %ss' % (
+        func.log.info('function [%s] run: %ss' % (
             func.__name__, round(time.time() - T, 3)))
         return rs
+    instance_log(func)
     return wrapper
 
 

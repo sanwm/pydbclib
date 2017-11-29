@@ -5,15 +5,15 @@ __author__ = "lyt"
 """
     db connection
 """
-__version__ = '0.0.9'
+__version__ = '1.0.0'
 
 __all__ = ['connection']
 
-import logging
-from py_db.logger import log
+from py_db.abstract import DbapiFactory
+from py_db.utils import run_time
 
 
-def connection(*args, **kwargs):
+def _connection(*args, **kwargs):
     """
     sqlalchemy uri:
         connection("oracle+cx_oracle://jwdn:password@local:1521/xe")
@@ -24,9 +24,9 @@ def connection(*args, **kwargs):
             use_kerberos=True, kerberos_service_name="impala",
             timeout=3600, driver="impala.dbapi")
     """
-    if kwargs.get('debug'):
-        log.setLevel(logging.DEBUG)
-    kwargs.pop('debug', None)
+    # if kwargs.get('debug'):
+    #     log.setLevel(logging.DEBUG)
+    # kwargs.pop('debug', None)
     driver = kwargs.get('driver')
     if driver is None:
         from . import sqlalchemy
@@ -36,10 +36,11 @@ def connection(*args, **kwargs):
         return base.Connection(*args, **kwargs)
 
 
-def connect_simple(uri):
-    if isinstance(uri, str):
-        return connection(uri)
-    else:
-        uri = uri.copy()
-        args = [uri.pop('uri', ())]
-        return connection(*args, **uri)
+# @run_time
+def connection(*args, **kw):
+    kw = kw.copy()
+    rs = kw.pop('uri', None)
+    args = (rs,) if rs else () + args
+    # print(args, kw)
+    db = _connection(*args, **kw)
+    return DbapiFactory(db)
