@@ -27,7 +27,7 @@ def basic(db, db_type=None):
 
 
 def sqlalchemy_test():
-    debug = False
+    # debug = False
     db = connection("oracle://jwdn:password@local:1521/xe", debug=debug)
     basic(db, 'oracle')
     db = connection("mysql+pyodbc://:@mysqldb", debug=debug)
@@ -76,13 +76,35 @@ def base_test():
     basic(db, "oracle")
 
 
+def basic_single():
+    db = connection('DSN=mysqldb', driver="pyodbc")
+    db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
+    try:
+        db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
+        print(db.query("select * from py_db_test where id=?", ['aaa']))
+        print(db.query("select * from py_db_test where id=?", ['1']))
+        print(db.query("select max(foo) from py_db_test where id=?", ['1']))
+    finally:
+        db.execute('drop table py_db_test')
+
+
+def sqlalchemy_single():
+    db = connection("oracle://jwdn:password@local:1521/xe", debug=debug)
+    db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
+    try:
+        # db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
+        print(db.query("select * from py_db_test where id=:1", ['1']))
+        print(db.query("select max(id) from py_db_test where id=:1", ['1']))
+    finally:
+        db.execute('drop table py_db_test')
+
 def main():
     base_test()
     sqlalchemy_test()
+    basic_single()
+    sqlalchemy_single()
     print('SUCCESS')
 
 
 if __name__ == '__main__':
     main()
-    db = connection('DSN=mysqldb', driver="pyodbc")
-    print(db.query("select * from py_etl where id=?", [111]))

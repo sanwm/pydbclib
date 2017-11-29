@@ -30,7 +30,7 @@ class DbapiFactory(object):
 
         db = db_type.lower() if isinstance(db_type, str) else None
         columns = [i for i in args[0].keys()]
-        if (set(unique) & set(columns)) != set(unique):
+        if (set(unique) & set(columns)) != set(unique) and unique not in columns:
             self.log.error("columns(%s) 中没有 unique(%s)" % (columns, unique))
             sys.exit(1)
         if db == "oracle":
