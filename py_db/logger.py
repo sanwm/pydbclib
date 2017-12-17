@@ -3,7 +3,7 @@ import logging
 console = logging.StreamHandler()
 formatter = logging.Formatter(
     # '%(asctime)s %(levelname)s %(module)s/%(name)s: %(message)s'
-    '<%(asctime)s %(name)s> %(levelname)s: %(message)s',
+    '<%(asctime)s %(levelname)s %(name)s> : %(message)s',
     '%Y-%m-%d %H:%M:%S'
 )
 console.setFormatter(formatter)
@@ -34,4 +34,7 @@ def instance_log(instance, debug=None):
 
 if __name__ == '__main__':
     print('hello world')
-    # log.info('hello world')
+    log = logging.getLogger('test')
+    log.addHandler(console)
+    log.setLevel(_debug[True])
+    log.info('hello world')

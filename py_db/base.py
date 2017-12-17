@@ -107,8 +107,8 @@ class Connection(object):
                 self.session.executemany(sql, args[i:i + num])
                 if len(args) > 2:
                     self.log.debug(
-                        "%s\nParam:[%s\n           ..."
-                        "\n       %s]" % (sql, args[0], args[-1]))
+                        "%s\nParam:[%s\n       %s"
+                        "\n           ... ...]" % (sql, args[0], args[1]))
                 else:
                     self.log.debug("%s\nParam:[%s]" % (
                         sql, '\n       '.join(map(str, args))))

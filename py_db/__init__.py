@@ -10,7 +10,7 @@ __version__ = '1.0.0'
 __all__ = ['connection']
 
 from py_db.abstract import DbapiFactory
-from py_db.utils import run_time
+# from py_db.utils import run_time
 
 
 def _connection(*args, **kwargs):

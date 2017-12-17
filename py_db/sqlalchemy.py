@@ -74,8 +74,8 @@ class Connection(object):
                 rs = self.session.execute(sql, args[i:i + num])
                 if len(args) > 2:
                     self.log.debug(
-                        "%s\nParam:[%s\n           ..."
-                        "\n       %s]" % (sql, args[0], args[-1]))
+                        "%s\nParam:[%s\n       %s"
+                        "\n           ... ...]" % (sql, args[0], args[-1]))
                 else:
                     self.log.debug("%s\nParam:[%s]" % (
                         sql, '\n       '.join(map(str, args))))
@@ -120,7 +120,7 @@ class Connection(object):
     def query_dict(self, sql, args=[], ordered=False, size=None):
         Dict = OrderedDict if ordered else dict
         if size is None:
-            rs = self.execute(sql)
+            rs = self.execute(sql, args)
             colunms = [i[0].lower() for i in rs._cursor_description()]
             return [Dict(zip(colunms, i)) for i in rs.fetchall()]
         else:
@@ -211,7 +211,6 @@ class Connection(object):
     def insert(self, sql, args=[], num=10000):
         rs = self.execute(sql, args, num)
         return rs.rowcount
-
 
     def rollback(self):
         """

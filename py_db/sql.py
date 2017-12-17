@@ -1,5 +1,6 @@
 import re
 
+
 class Parse(object):
 
     def __init__(self, sql):
