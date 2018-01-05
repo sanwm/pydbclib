@@ -95,23 +95,24 @@ class Connection(object):
                     'SQL EXECUTE ERROR(SQL: "%s")\nParam:%s' % (sql, args))
             else:
                 self.log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
-            self.log.critical("REASON {%s}\nEXIT" % reason)
+            self.log.critical("REASON {%s}\nEXIT" % reason.__str__().strip())
             sys.exit(1)
         return count
 
-    def executemany(self, sql, args, num):
+    def executemany(self, sql, args, num, is_first=True):
         length = len(args)
         count = 0
         try:
             for i in range(0, length, num):
                 self.session.executemany(sql, args[i:i + num])
-                if len(args) > 2:
-                    self.log.debug(
-                        "%s\nParam:[%s\n       %s"
-                        "\n           ... ...]" % (sql, args[0], args[1]))
-                else:
-                    self.log.debug("%s\nParam:[%s]" % (
-                        sql, '\n       '.join(map(str, args))))
+                if is_first:
+                    if len(args) > 2:
+                        self.log.debug(
+                            "%s\nParam:[%s\n       %s"
+                            "\n           ... ...]" % (sql, args[0], args[1]))
+                    else:
+                        self.log.debug("%s\nParam:[%s]" % (
+                            sql, '\n       '.join(map(str, args))))
                 count += self.session.rowcount
         except (self.DatabaseError, self.Error) as reason:
             self.rollback()
@@ -123,7 +124,8 @@ class Connection(object):
             else:
                 self.executemany(
                     sql, args[i:i + num],
-                    num=reduce_num(num, length))
+                    num=reduce_num(num, length),
+                    is_first=False)
         return count
 
     def _query_generator(self, sql, args, chunksize):

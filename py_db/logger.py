@@ -17,8 +17,8 @@ _debug = {
 
 def instance_log(instance, debug=None):
     if debug:
-        name = "(mode debug) %s.%s" % (instance.__module__,
-                                       instance.__class__.__name__)
+        name = "[debug on] %s.%s" % (instance.__module__,
+                                     instance.__class__.__name__)
     else:
         name = "%s.%s" % (instance.__module__,
                           instance.__class__.__name__)

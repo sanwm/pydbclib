@@ -28,7 +28,7 @@ def basic(db, db_type=None):
 
 def sqlalchemy_test():
     # debug = False
-    db = connection("oracle://jwdn:password@local:1521/xe", debug=debug)
+    db = connection("oracle://jwdn:lyt@local:1521/xe", debug=debug)
     basic(db, 'oracle')
     db = connection("mysql+pyodbc://:@mysqldb", debug=debug)
     basic(db, 'mysql')
@@ -48,10 +48,10 @@ def sqlalchemy_test():
 
 def base_test():
     db = connection(
-        'jwdn/password@local:1521/xe',
+        'jwdn/lyt@local:1521/xe',
         driver="cx_Oracle", debug=debug)
     basic(db, 'oracle')
-    db = connection('DSN=oracledb;PWD=password', driver="pyodbc", debug=debug)
+    db = connection('DSN=oracledb;PWD=lyt', driver="pyodbc", debug=debug)
     basic(db, 'oracle')
     # 'DSN=mydb;UID=root;PWD=password'
     db = connection('DSN=mysqldb', driver="pyodbc")
@@ -71,7 +71,7 @@ def base_test():
         'driver': "cx_Oracle",
         # 'debug': debug
     }
-    db = connection(uri='jwdn/password@local:1521/xe', **kw)
+    db = connection(uri='jwdn/lyt@local:1521/xe', **kw)
     basic(db)
     basic(db, "oracle")
 
@@ -89,7 +89,7 @@ def basic_single():
 
 
 def sqlalchemy_single():
-    db = connection("oracle://jwdn:password@local:1521/xe", debug=debug)
+    db = connection("oracle://jwdn:lyt@local:1521/xe", debug=debug)
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
         # db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
@@ -98,11 +98,12 @@ def sqlalchemy_single():
     finally:
         db.execute('drop table py_db_test')
 
+
 def main():
     base_test()
     sqlalchemy_test()
-    basic_single()
-    sqlalchemy_single()
+    # basic_single()
+    # sqlalchemy_single()
     print('SUCCESS')
 
 

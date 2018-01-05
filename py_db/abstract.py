@@ -99,7 +99,7 @@ class DbapiFactory(object):
         sql = "delete from {table} where {cp_field} is null".format(
             table=table, cp_field=cp_field)
         null_count = self.db.execute(sql).rowcount
-        log.info(
+        self.log.info(
             '删除对比字段(%s)中为空的数据：%s' % (cp_field, null_count)
         ) if null_count else None
         sql = ("delete from {table} where"
@@ -111,7 +111,7 @@ class DbapiFactory(object):
                    one_of_id=unique.split(',')[0]))
         rs = self.db.execute(sql)
         count = rs.rowcount
-        log.info('删除重复数据：%s' % count)
+        self.log.info('删除重复数据：%s' % count)
         return count
 
     def empty(self, table):

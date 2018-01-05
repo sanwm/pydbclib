@@ -20,8 +20,13 @@ class Connection(object):
         "oracle+cx_oracle://jwdn:password@192.168.152.1:1521/xe"
         """
         instance_log(self, debug)
-        self.connect = con if isinstance(
-            con, engine.base.Engine) else create_engine(con, echo=echo)
+        try:
+            self.connect = con if isinstance(
+                con, engine.base.Engine) else create_engine(con, echo=echo)
+        except Exception as reason:
+            self.log.critical("REASON(%s)\nargs:%s example('oracle://user:password@local:1521/xe')\nEXIT" % (
+                reason, con))
+            sys.exit(1)
         self.session = self.create_session()
 
     def create_session(self):
@@ -62,23 +67,29 @@ class Connection(object):
                     'SQL EXECUTE ERROR(SQL: "%s")\nParam:%s' % (sql, args))
             else:
                 self.log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
-            self.log.critical("REASON {%s}\nEXIT" % reason)
+            self.log.critical("REASON {%s}\nEXIT" % reason.__str__().strip())
             sys.exit(1)
+        # if args:
+        #     self.log.debug("%s\nParam:%s" % (sql, args))
+        # else:
+        #     self.log.debug(sql)
+        # rs = self.session.execute(sql, args)
         return rs
 
-    def executemany(self, sql, args, num):
+    def executemany(self, sql, args, num, is_first=True):
         length = len(args)
         count = 0
         try:
             for i in range(0, length, num):
                 rs = self.session.execute(sql, args[i:i + num])
-                if len(args) > 2:
-                    self.log.debug(
-                        "%s\nParam:[%s\n       %s"
-                        "\n           ... ...]" % (sql, args[0], args[-1]))
-                else:
-                    self.log.debug("%s\nParam:[%s]" % (
-                        sql, '\n       '.join(map(str, args))))
+                if is_first:
+                    if len(args) > 2:
+                        self.log.debug(
+                            "%s\nParam:[%s\n       %s"
+                            "\n           ... ...]" % (sql, args[0], args[-1]))
+                    else:
+                        self.log.debug("%s\nParam:[%s]" % (
+                            sql, '\n       '.join(map(str, args))))
                 count += rs.rowcount
         except (DatabaseError, DBAPIError) as reason:
             self.rollback()
@@ -89,7 +100,8 @@ class Connection(object):
             else:
                 self.executemany(
                     sql, args[i:i + num],
-                    num=reduce_num(num, length))
+                    num=reduce_num(num, length),
+                    is_first=False)
         rs.rowcount = count
         return rs
 

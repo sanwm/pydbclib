@@ -10,6 +10,8 @@ __version__ = '1.0.0'
 __all__ = ['connection']
 
 from py_db.abstract import DbapiFactory
+from py_db import base
+from py_db import sqlalchemy
 # from py_db.utils import run_time
 
 
@@ -29,10 +31,10 @@ def _connection(*args, **kwargs):
     # kwargs.pop('debug', None)
     driver = kwargs.get('driver')
     if driver is None:
-        from . import sqlalchemy
+        # from . import sqlalchemy
         return sqlalchemy.Connection(*args, **kwargs)
     else:
-        from . import base
+        # from . import base
         return base.Connection(*args, **kwargs)
 
 
