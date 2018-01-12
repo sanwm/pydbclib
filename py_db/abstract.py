@@ -1,4 +1,5 @@
 import sys
+from py_db.error import ArgsError
 
 
 class DbapiFactory(object):
@@ -24,15 +25,15 @@ class DbapiFactory(object):
         check = (not args or not isinstance(args, (tuple, list)) or
                  not isinstance(args[0], dict))
         if check:
-            self.log.error("args 形式错误，必须是字典集合 "
-                           "for example([{'a':1},{'b':2}])")
-            sys.exit(1)
+            # self.log.error
+            raise ArgsError("args 形式错误，必须是字典集合 "
+                            "for example([{'a':1},{'b':2}])")
 
         db = db_type.lower() if isinstance(db_type, str) else None
         columns = [i for i in args[0].keys()]
         if (set(unique) & set(columns)) != set(unique) and unique not in columns:
-            self.log.error("columns(%s) 中没有 unique(%s)" % (columns, unique))
-            sys.exit(1)
+            # self.log.error("columns(%s) 中没有 unique(%s)" % (columns, unique))
+            raise ArgsError("columns(%s) 中没有 unique(%s)" % (columns, unique))
         if db == "oracle":
             self.oracle_merge(table, args, columns, unique, num)
         elif db == "mysql":

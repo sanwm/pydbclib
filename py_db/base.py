@@ -5,6 +5,7 @@ from py_db.utils import reduce_num
 from py_db.default import place_holder
 from py_db.sql import handle
 from py_db.logger import instance_log
+from py_db.error import ConnectError, ExecuteError
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
@@ -40,7 +41,7 @@ class Connection(object):
         except Exception as reason:
             self.log.critical("REASON(%s)\nargs:%s, kwargs:%s\nEXIT" % (
                 reason, args, kwargs))
-            sys.exit(1)
+            raise ConnectError(reason.__str__())
         return con
 
     def create_session(self):
@@ -96,7 +97,7 @@ class Connection(object):
             else:
                 self.log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
             self.log.critical("REASON {%s}\nEXIT" % reason.__str__().strip())
-            sys.exit(1)
+            raise ExecuteError(reason.__str__())
         return count
 
     def executemany(self, sql, args, num, is_first=True):

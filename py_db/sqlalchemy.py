@@ -9,6 +9,7 @@ import sys
 from py_db.utils import reduce_num
 from py_db.sql import handle
 from py_db.logger import instance_log
+from py_db.error import ConnectError, ExecuteError
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
@@ -26,7 +27,7 @@ class Connection(object):
         except Exception as reason:
             self.log.critical("REASON(%s)\nargs:%s example('oracle://user:password@local:1521/xe')\nEXIT" % (
                 reason, con))
-            sys.exit(1)
+            raise ConnectError(reason.__str__())
         self.session = self.create_session()
 
     def create_session(self):
@@ -68,7 +69,7 @@ class Connection(object):
             else:
                 self.log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
             self.log.critical("REASON {%s}\nEXIT" % reason.__str__().strip())
-            sys.exit(1)
+            raise ExecuteError(reason.__str__())
         # if args:
         #     self.log.debug("%s\nParam:%s" % (sql, args))
         # else:

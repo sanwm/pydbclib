@@ -100,9 +100,9 @@ def sqlalchemy_single():
 
 
 def main():
-    base_test()
-    sqlalchemy_test()
-    # basic_single()
+    # base_test()
+    # sqlalchemy_test()
+    basic_single()
     # sqlalchemy_single()
     print('SUCCESS')
 
