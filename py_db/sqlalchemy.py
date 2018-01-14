@@ -5,29 +5,32 @@ from collections import OrderedDict
 from sqlalchemy import engine
 import re
 import os
-import sys
+# import sys
 from py_db.utils import reduce_num
 from py_db.sql import handle
 from py_db.logger import instance_log
-from py_db.error import ConnectError, ExecuteError
+# from py_db.error import ConnectError, ExecuteError
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
 class Connection(object):
 
-    def __init__(self, con, debug=False, echo=False):
+    def __init__(self, dsn, debug=False, echo=False):
         """
-        >>>con
-        "oracle+cx_oracle://jwdn:password@192.168.152.1:1521/xe"
+        :param dsn: sqlalchemy.create_engine url parameter, for example: "oracle+cx_oracle://jwdn:password@192.168.152.1:1521/xe"
+        :param debug: print debug info
+        :param echo: sqlalchemy.create_engine echo parameter
         """
         instance_log(self, debug)
         try:
-            self.connect = con if isinstance(
-                con, engine.base.Engine) else create_engine(con, echo=echo)
+            self.connect = dsn if isinstance(
+                dsn, engine.base.Engine) else create_engine(dsn, echo=echo)
         except Exception as reason:
-            self.log.critical("REASON(%s)\nargs:%s example('oracle://user:password@local:1521/xe')\nEXIT" % (
-                reason, con))
-            raise ConnectError(reason.__str__())
+            self.log.critical(
+                "db connect failed args: %s, "
+                "Usage example: 'oracle+cx_oracle://user:pwd@local:1521/xe'" %
+                dict(dsn=dsn, debug=debug, echo=echo))
+            raise reason
         self.session = self.create_session()
 
     def create_session(self):
@@ -35,9 +38,6 @@ class Connection(object):
         return DB_Session()
 
     def execute(self, sql, args=[], num=10000):
-        """
-        执行sql
-        """
         is_list = (':' in sql and args and isinstance(args, (list, tuple)) and
                    not isinstance(args[0], dict))
         is_many = (args and not isinstance(args, dict) and
@@ -68,13 +68,7 @@ class Connection(object):
                     'SQL EXECUTE ERROR(SQL: "%s")\nParam:%s' % (sql, args))
             else:
                 self.log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
-            self.log.critical("REASON {%s}\nEXIT" % reason.__str__().strip())
-            raise ExecuteError(reason.__str__())
-        # if args:
-        #     self.log.debug("%s\nParam:%s" % (sql, args))
-        # else:
-        #     self.log.debug(sql)
-        # rs = self.session.execute(sql, args)
+            raise reason
         return rs
 
     def executemany(self, sql, args, num, is_first=True):
@@ -114,6 +108,12 @@ class Connection(object):
             res = rs.fetchmany(chunksize)
 
     def query(self, sql, args=[], size=None):
+        """
+        :param sql: str
+        :param args: list or dict
+        :param size: int 查询结果每次返回数量
+        :return: a list or generator(when zise is not None) with tuple inside
+        """
         if size is None:
             rs = self.execute(sql, args).fetchall()
             # print("rs:", rs)
@@ -131,6 +131,13 @@ class Connection(object):
             res = rs.fetchmany(chunksize)
 
     def query_dict(self, sql, args=[], ordered=False, size=None):
+        """
+        :param sql: str
+        :param args: list or dict
+        :param ordered: 返回的字典是否是排序字典
+        :param size: int 查询结果每次返回数量
+        :return: a list or generator(when zise is not None) with dict inside
+        """
         Dict = OrderedDict if ordered else dict
         if size is None:
             rs = self.execute(sql, args)
@@ -141,7 +148,7 @@ class Connection(object):
 
     def _modify_field_size(self, reason):
         """
-        修改oracle char 类型字段大小
+        修改oracle varchar2 类型字段大小
         """
         match_reason = re.compile(
             r'"\w+"\."(\w+)"\."(\w+)" 的值太大 \(实际值: (\d+),')
@@ -226,15 +233,9 @@ class Connection(object):
         return rs.rowcount
 
     def rollback(self):
-        """
-        数据回滚
-        """
         self.session.rollback()
 
     def commit(self):
-        """
-        提交
-        """
         self.session.commit()
 
     def close(self):

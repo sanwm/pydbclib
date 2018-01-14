@@ -1,4 +1,3 @@
-
 import logging
 console = logging.StreamHandler()
 formatter = logging.Formatter(
@@ -26,10 +25,6 @@ def instance_log(instance, debug=None):
     log.addHandler(console)
     log.setLevel(_debug[debug])
     instance.log = log
-
-
-# def print(*args, notice=''):
-#     log.debug('%s\n%s' % (notice, ' '.join(['%s' % i for i in args])))
 
 
 if __name__ == '__main__':

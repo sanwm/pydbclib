@@ -5,7 +5,6 @@ from py_db.utils import reduce_num
 from py_db.default import place_holder
 from py_db.sql import handle
 from py_db.logger import instance_log
-from py_db.error import ConnectError, ExecuteError
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 
@@ -39,9 +38,10 @@ class Connection(object):
         try:
             con = self.driver.connect(*args, **kwargs)
         except Exception as reason:
-            self.log.critical("REASON(%s)\nargs:%s, kwargs:%s\nEXIT" % (
-                reason, args, kwargs))
-            raise ConnectError(reason.__str__())
+            self.log.critical(
+                "db connect failed by driver '%s' args: %s kwargs: %s" %
+                (self.driver_name, args, kwargs))
+            raise reason
         return con
 
     def create_session(self):
@@ -96,8 +96,7 @@ class Connection(object):
                     'SQL EXECUTE ERROR(SQL: "%s")\nParam:%s' % (sql, args))
             else:
                 self.log.error('SQL EXECUTE ERROR(SQL: "%s")' % sql)
-            self.log.critical("REASON {%s}\nEXIT" % reason.__str__().strip())
-            raise ExecuteError(reason.__str__())
+            raise reason
         return count
 
     def executemany(self, sql, args, num, is_first=True):
@@ -138,13 +137,10 @@ class Connection(object):
 
     def query(self, sql, args=[], size=None):
         """
-        Args:
-            sql: str
-            args: list or dict
-        Returns:
-            list
-        Raises:
-            None
+        :param sql: str
+        :param args: list or dict
+        :param size: int 查询结果每次返回数量
+        :return: a list or generator(when zise is not None) with tuple inside
         """
         if size is None:
             self.execute(sql, args)
@@ -164,6 +160,13 @@ class Connection(object):
             res = self.session.fetchmany(chunksize)
 
     def query_dict(self, sql, args=[], ordered=False, size=None):
+        """
+        :param sql: str
+        :param args: list or dict
+        :param ordered: 返回的字典是否是排序字典
+        :param size: int 查询结果每次返回数量
+        :return: a list or generator(when zise is not None) with dict inside
+        """
         Dict = OrderedDict if ordered else dict
         if size is None:
             self.execute(sql, args)
@@ -179,15 +182,9 @@ class Connection(object):
         return self.session.description
 
     def rollback(self):
-        """
-        数据回滚
-        """
         self.connect.rollback()
 
     def commit(self):
-        """
-        提交
-        """
         self.connect.commit()
 
     def close(self):

@@ -1,38 +1,27 @@
-import sys
+# import sys
+import logging
+from py_db.logger import instance_log
 from py_db.error import ArgsError
 
 
-class DbapiFactory(object):
+class ConAdapter(object):
     def __init__(self, db):
         self.db = db
+        instance_log(self, db.log.isEnabledFor(logging.DEBUG))
         self.connect = db.connect
         self.session = db.session
-        self.log = db.log
-
-    def execute(self, sql, args=[], num=10000):
-        return self.db.execute(sql, args, num)
-
-    def insert(self, sql, args=[], num=10000):
-        return self.db.insert(sql, args, num)
-
-    def query(self, sql, args=[], size=None):
-        return self.db.query(sql, args, size)
-
-    def query_dict(self, sql, args=[], ordered=False, size=None):
-        return self.db.query_dict(sql, args, ordered, size)
+        self.dict_query = self.db.query_dict
 
     def merge(self, table, args, unique, num=10000, db_type=None):
         check = (not args or not isinstance(args, (tuple, list)) or
                  not isinstance(args[0], dict))
         if check:
-            # self.log.error
             raise ArgsError("args 形式错误，必须是字典集合 "
                             "for example([{'a':1},{'b':2}])")
 
         db = db_type.lower() if isinstance(db_type, str) else None
         columns = [i for i in args[0].keys()]
         if (set(unique) & set(columns)) != set(unique) and unique not in columns:
-            # self.log.error("columns(%s) 中没有 unique(%s)" % (columns, unique))
             raise ArgsError("columns(%s) 中没有 unique(%s)" % (columns, unique))
         if db == "oracle":
             self.oracle_merge(table, args, columns, unique, num)
@@ -117,16 +106,11 @@ class DbapiFactory(object):
 
     def empty(self, table):
         sql = "truncate table %s" % table
-        self.db.insert(sql)
+        self.insert(sql)
 
-    def rollback(self):
-        self.db.rollback()
-
-    def commit(self):
-        self.db.commit()
-
-    def close(self):
-        self.db.close()
+    def __getattr__(self, attr):
+        # self.log.info(attr)
+        return getattr(self.db, attr)
 
     def __enter__(self):
         return self
