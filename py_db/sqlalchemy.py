@@ -31,7 +31,8 @@ class Connection(object):
                 "Usage example: 'oracle+cx_oracle://user:pwd@local:1521/xe'" %
                 dict(dsn=dsn, debug=debug, echo=echo))
             raise reason
-        self.session = self.create_session()
+        if hasattr(self, session):
+            self.session = self.create_session()
 
     def create_session(self):
         DB_Session = sessionmaker(bind=self.connect)
