@@ -22,16 +22,30 @@ class Connection(object):
         :param echo: sqlalchemy.create_engine echo parameter
         """
         instance_log(self, debug)
-        try:
-            self.connect = dsn if isinstance(
-                dsn, engine.base.Engine) else create_engine(dsn, echo=echo)
-        except Exception as reason:
-            self.log.critical(
-                "db connect failed args: %s, "
-                "Usage example: 'oracle+cx_oracle://user:pwd@local:1521/xe'" %
-                dict(dsn=dsn, debug=debug, echo=echo))
-            raise reason
-        if hasattr(self, session):
+        self.connect = None
+        self.session = None
+        self._dsn = dsn
+        self._echo = echo
+
+    def reset(self, dsn=None):
+        if self.connect:
+            self.commit()
+            self.close()
+        if dsn is None:
+            dsn = self._dsn
+        if hasattr(dsn, 'session'):
+            self.connect = dsn.engine
+            self.session = dsn.session
+        else:
+            try:
+                self.connect = dsn if isinstance(
+                    dsn, engine.base.Engine) else create_engine(dsn, echo=self._echo)
+            except Exception as reason:
+                self.log.critical(
+                    "db connect failed args: %s, "
+                    "Usage example: 'oracle+cx_oracle://user:pwd@local:1521/xe'" %
+                    dict(dsn=dsn, echo=self._echo))
+                raise reason
             self.session = self.create_session()
 
     def create_session(self):
@@ -39,6 +53,8 @@ class Connection(object):
         return DB_Session()
 
     def execute(self, sql, args=[], num=10000):
+        if self.connect is None:
+            self.reset()
         is_list = (':' in sql and args and isinstance(args, (list, tuple)) and
                    not isinstance(args[0], dict))
         is_many = (args and not isinstance(args, dict) and

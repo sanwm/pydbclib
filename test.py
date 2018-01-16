@@ -102,9 +102,12 @@ def sqlalchemy_single():
 
 
 def test():
-    with connection(host='localhost', port=10000, user='hive', password='hive', database='default', auth_mechanism='PLAIN', driver="impala.dbapi") as db:
-        rs = db.query("show tables")
-        print(rs)
+    # with connection(host='localhost', port=10000, user='hive', password='hive', database='default', auth_mechanism='PLAIN', driver="impala.dbapi") as db:
+    db1 = connection("oracle://jwdn:jwdn@local:1521/xe", echo=True)
+    db1.query("select * from SS1")
+    db2 = connection("oracle://jwdn:jwdn@local:1521/xe", echo='debug')
+    db2.query("select * from SS1")
+    db1.query("select * from SS1")
 
 
 def main():

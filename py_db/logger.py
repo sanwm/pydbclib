@@ -1,7 +1,7 @@
 import logging
 console = logging.StreamHandler()
 formatter = logging.Formatter(
-    # '%(asctime)s %(levelname)s %(module)s/%(name)s: %(message)s'
+    # '%(asctime)s %(levelname)s %(module)s/%(name)s: %(message)s '
     '<%(asctime)s %(levelname)s %(name)s> : %(message)s',
     '%Y-%m-%d %H:%M:%S'
 )
