@@ -9,6 +9,7 @@ import os
 from py_db.utils import reduce_num
 from py_db.sql import handle
 from py_db.logger import instance_log
+# from collections import property
 # from py_db.error import ConnectError, ExecuteError
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
@@ -22,23 +23,30 @@ class Connection(object):
         :param echo: sqlalchemy.create_engine echo parameter
         """
         instance_log(self, debug)
-        self.connect = None
+        self._connect = None
         self.session = None
         self._dsn = dsn
         self._echo = echo
 
+    @property
+    def connect(self):
+        # print('connect')
+        if self._connect is None:
+            self.reset()
+        return self._connect
+
     def reset(self, dsn=None):
-        if self.connect:
+        if self._connect and dsn:
             self.commit()
             self.close()
         if dsn is None:
             dsn = self._dsn
         if hasattr(dsn, 'session'):
-            self.connect = dsn.engine
+            self._connect = dsn.engine
             self.session = dsn.session
         else:
             try:
-                self.connect = dsn if isinstance(
+                self._connect = dsn if isinstance(
                     dsn, engine.base.Engine) else create_engine(dsn, echo=self._echo)
             except Exception as reason:
                 self.log.critical(
@@ -49,11 +57,11 @@ class Connection(object):
             self.session = self.create_session()
 
     def create_session(self):
-        DB_Session = sessionmaker(bind=self.connect)
+        DB_Session = sessionmaker(bind=self._connect)
         return DB_Session()
 
     def execute(self, sql, args=[], num=10000):
-        if self.connect is None:
+        if self._connect is None:
             self.reset()
         is_list = (':' in sql and args and isinstance(args, (list, tuple)) and
                    not isinstance(args[0], dict))

@@ -17,10 +17,16 @@ class Connection(object):
         kwargs.pop('driver')
         self.placeholder = kwargs.get("placeholder", place_holder.get(self.driver_name, "?"))
         kwargs.pop('placeholder', None)
-        # print(args, kwargs)
         self.create_driver()
         self.connect = self.create_con(*args, **kwargs)
         self.session = self.create_session()
+
+    # def reset(self, *args, **kwargs):
+    #     if self.connect:
+    #         self.commit()
+    #         self.close()
+    #     self.connect = self.create_con(*args, **kwargs)
+    #     self.session = self.create_session()
 
     def dbapi(self):
         __import__(self.driver_name)

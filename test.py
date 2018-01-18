@@ -60,7 +60,7 @@ def base_test():
     db = connection(
         host='centos',
         user='root',
-        password='hadoop',
+        password='password',
         database='test',
         charset='utf8',
         driver="pymysql",
@@ -91,6 +91,7 @@ def basic_single():
 
 def sqlalchemy_single():
     db = connection(dsn="oracle://jwdn:jwdn@local:1521/xe", debug=debug)
+    print(db.connect)
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
         db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
@@ -99,6 +100,8 @@ def sqlalchemy_single():
         print(db.query("select max(id) from py_db_test where id=:1", ['1']))
     finally:
         db.execute('drop table py_db_test')
+        print(db.connect)
+    print(db.connect)
 
 
 def test():
@@ -119,5 +122,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    test()
+    main()
+    # test()

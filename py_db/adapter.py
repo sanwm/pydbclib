@@ -8,9 +8,14 @@ class ConAdapter(object):
     def __init__(self, db):
         self.db = db
         instance_log(self, db.log.isEnabledFor(logging.DEBUG))
-        self.connect = db.connect
-        self.session = db.session
         self.dict_query = self.db.query_dict
+
+    def insert_by_dict(table, dict_args):
+        columns = [i for i in args[0].keys()]
+        values = ','.join([':%s' % i for i in columns])
+        sql_in = "INSERT INTO {table}({columns}) VALUES({values})".format(
+            table=table, columns=','.join(columns), values=values)
+        self.insert(sql_in, dict_args)
 
     def merge(self, table, args, unique, num=10000, db_type=None):
         check = (not args or not isinstance(args, (tuple, list)) or
