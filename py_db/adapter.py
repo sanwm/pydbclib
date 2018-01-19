@@ -10,8 +10,18 @@ class ConAdapter(object):
         instance_log(self, db.log.isEnabledFor(logging.DEBUG))
         self.dict_query = self.db.query_dict
 
-    def insert_by_dict(table, dict_args):
-        columns = [i for i in args[0].keys()]
+    def insert_by_dict(self, table, dict_args):
+        if isinstance(dict_args, dict):
+            dict_tmp = dict_args
+        else:
+            if dict_args and isinstance(dict_args, (list, tuple)):
+                if isinstance(dict_args[0], dict):
+                    dict_tmp = dict_args[0]
+                else:
+                    raise ArgsError('参数列表中元素必须为字典')
+            else:
+                raise ArgsError('参数必须是非列表')
+        columns = [i for i in dict_tmp]
         values = ','.join([':%s' % i for i in columns])
         sql_in = "INSERT INTO {table}({columns}) VALUES({values})".format(
             table=table, columns=','.join(columns), values=values)
@@ -112,6 +122,26 @@ class ConAdapter(object):
     def empty(self, table):
         sql = "truncate table %s" % table
         self.insert(sql)
+
+    def exist_table(self, table):
+        sql = "select count(*) from %s" % table
+        try:
+            rs = self.query(sql)
+            if rs[0][0]:
+                return True
+            else:
+                return None
+        except Exception:
+            return False
+
+    def create_table(self, table, field, length=100):
+        if self.exist_table(table) == False:
+            self.log.warn("table '%s' exist" % table)
+            return False
+        else:
+            sql = "create table %s(%s)" % (table, ','.join(["%s varchar2(%d)" % (i, length) for i in field]))
+            self.insert(sql)
+            return True
 
     def __getattr__(self, attr):
         # self.log.info(attr)

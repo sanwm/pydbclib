@@ -1,6 +1,6 @@
 from py_db import connection
 debug = True
-debug = False
+# debug = False
 
 
 def basic(db, db_type=None):
@@ -60,7 +60,7 @@ def base_test():
     db = connection(
         host='centos',
         user='root',
-        password='password',
+        password='hadoop',
         database='test',
         charset='utf8',
         driver="pymysql",
@@ -82,6 +82,7 @@ def basic_single():
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
         db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
+        db.insert_by_dict("py_db_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
         print(db.query("select * from py_db_test where id=:1", ['aaa']))
         print(db.query("select * from py_db_test where id=:1", ['1']))
         print(db.query("select max(foo) from py_db_test where id=:1", ['1']))
@@ -95,13 +96,12 @@ def sqlalchemy_single():
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
         db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
+        db.insert_by_dict("py_db_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
         print(db.query("select * from py_db_test where id=:1", ['aaa']))
         print(db.query("select * from py_db_test where id=:1", ['1']))
         print(db.query("select max(id) from py_db_test where id=:1", ['1']))
     finally:
         db.execute('drop table py_db_test')
-        print(db.connect)
-    print(db.connect)
 
 
 def test():
@@ -116,7 +116,7 @@ def test():
 def main():
     # base_test()
     # sqlalchemy_test()
-    # basic_single()
+    basic_single()
     sqlalchemy_single()
     print('SUCCESS')
 

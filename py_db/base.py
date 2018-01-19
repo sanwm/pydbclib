@@ -12,21 +12,32 @@ class Connection(object):
 
     def __init__(self, *args, **kwargs):
         instance_log(self, kwargs.get('debug'))
+        self._connect = None
+        self.session = None
+        self._args = args
+        self._kwargs = kwargs
+
+    @property
+    def connect(self):
+        if self._connect is None:
+            self.reset()
+        return self._connect
+
+    def reset(self, *args, **kwargs):
+        if self._connect:
+            self.commit()
+            self.close()
+        if not args and not kwargs:
+            args = self._args
+            kwargs = self._kwargs
         kwargs.pop('debug', None)
         self.driver_name = kwargs.get("driver")
         kwargs.pop('driver')
         self.placeholder = kwargs.get("placeholder", place_holder.get(self.driver_name, "?"))
         kwargs.pop('placeholder', None)
         self.create_driver()
-        self.connect = self.create_con(*args, **kwargs)
+        self._connect = self.create_con(*args, **kwargs)
         self.session = self.create_session()
-
-    # def reset(self, *args, **kwargs):
-    #     if self.connect:
-    #         self.commit()
-    #         self.close()
-    #     self.connect = self.create_con(*args, **kwargs)
-    #     self.session = self.create_session()
 
     def dbapi(self):
         __import__(self.driver_name)
@@ -54,6 +65,8 @@ class Connection(object):
         return self.connect.cursor()
 
     def execute(self, sql, args=[], num=10000):
+        if self._connect is None:
+            self.reset()
         is_many = (args and not isinstance(args, dict) and
                    isinstance(args[0], (tuple, list, dict)))
         need_handle = (":" in sql and args and (":" not in self.placeholder))

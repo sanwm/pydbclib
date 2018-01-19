@@ -30,7 +30,6 @@ class Connection(object):
 
     @property
     def connect(self):
-        # print('connect')
         if self._connect is None:
             self.reset()
         return self._connect
