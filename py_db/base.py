@@ -14,6 +14,7 @@ class Connection(object):
         instance_log(self, kwargs.get('debug'))
         self._connect = None
         self.session = None
+        self.columns = None
         self._args = args
         self._kwargs = kwargs
 
@@ -98,6 +99,7 @@ class Connection(object):
             count = self.executemany(sql, args, num)
         else:
             count = self.executeone(sql, args)
+        self.columns = None
         return count
 
     def executeone(self, sql, args):
@@ -149,6 +151,8 @@ class Connection(object):
 
     def _query_generator(self, sql, args, chunksize):
         self.execute(sql, args)
+        columns = [i[0].lower() for i in self.description()]
+        self.columns = columns
         res = self.session.fetchmany(chunksize)
         while res:
             yield res
@@ -163,6 +167,8 @@ class Connection(object):
         """
         if size is None:
             self.execute(sql, args)
+            columns = [i[0].lower() for i in self.description()]
+            self.columns = columns
             rs = self.session.fetchall()
             # print("rs1:", rs)
             res = [tuple(i) for i in rs]
@@ -172,10 +178,11 @@ class Connection(object):
 
     def _query_dict_generator(self, sql, Dict, args, chunksize):
         self.execute(sql, args)
-        colunms = [i[0].lower() for i in self.description()]
+        columns = [i[0].lower() for i in self.description()]
+        self.columns = columns
         res = self.session.fetchmany(chunksize)
         while res:
-            yield [Dict(zip(colunms, i)) for i in res]
+            yield [Dict(zip(columns, i)) for i in res]
             res = self.session.fetchmany(chunksize)
 
     def query_dict(self, sql, args=[], ordered=False, size=None):
@@ -189,8 +196,9 @@ class Connection(object):
         Dict = OrderedDict if ordered else dict
         if size is None:
             self.execute(sql, args)
-            colunms = [i[0].lower() for i in self.description()]
-            return [Dict(zip(colunms, i)) for i in self.session.fetchall()]
+            columns = [i[0].lower() for i in self.description()]
+            self.columns = columns
+            return [Dict(zip(columns, i)) for i in self.session.fetchall()]
         else:
             return self._query_dict_generator(sql, Dict, args, size)
 

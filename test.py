@@ -92,16 +92,22 @@ def basic_single():
 
 def sqlalchemy_single():
     db = connection(dsn="oracle://jwdn:jwdn@local:1521/xe", debug=debug)
+    db = connection(uri='DSN=mysqldb', driver="pyodbc", debug=debug)
     print(db.connect)
     db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
         db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
         db.insert_by_dict("py_db_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
+        print('columns1', db.columns)
         print(db.query("select * from py_db_test where id=:1", ['aaa']))
+        print('columns2', db.columns)
         print(db.query("select * from py_db_test where id=:1", ['1']))
+        print('columns3', db.columns)
         print(db.query("select max(id) from py_db_test where id=:1", ['1']))
+        print('columns4', db.columns)
     finally:
         db.execute('drop table py_db_test')
+        print('columns5', db.columns)
 
 
 def test():
@@ -116,7 +122,7 @@ def test():
 def main():
     # base_test()
     # sqlalchemy_test()
-    basic_single()
+    # basic_single()
     sqlalchemy_single()
     print('SUCCESS')
 

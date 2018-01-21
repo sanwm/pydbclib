@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlalchemy.exc import DatabaseError, DBAPIError
 from collections import OrderedDict
 from sqlalchemy import engine
@@ -25,6 +26,7 @@ class Connection(object):
         instance_log(self, debug)
         self._connect = None
         self.session = None
+        self.columns = None
         self._dsn = dsn
         self._echo = echo
 
@@ -46,7 +48,7 @@ class Connection(object):
         else:
             try:
                 self._connect = dsn if isinstance(
-                    dsn, engine.base.Engine) else create_engine(dsn, echo=self._echo)
+                    dsn, engine.base.Engine) else create_engine(dsn, poolclass=NullPool, echo=self._echo)
             except Exception as reason:
                 self.log.critical(
                     "db connect failed args: %s, "
@@ -76,6 +78,7 @@ class Connection(object):
             rs = self.executemany(sql, args, num)
         else:
             rs = self.executeone(sql, args)
+        self.columns = None
         return rs
 
     def executeone(self, sql, args):
@@ -126,6 +129,8 @@ class Connection(object):
 
     def _query_generator(self, sql, args, chunksize):
         rs = self.execute(sql, args)
+        columns = [i[0].lower() for i in rs._cursor_description()]
+        self.columns = columns
         res = rs.fetchmany(chunksize)
         while res:
             yield res
@@ -139,7 +144,10 @@ class Connection(object):
         :return: a list or generator(when zise is not None) with tuple inside
         """
         if size is None:
-            rs = self.execute(sql, args).fetchall()
+            rs = self.execute(sql, args)
+            columns = [i[0].lower() for i in rs._cursor_description()]
+            self.columns = columns
+            rs = rs.fetchall()
             # print("rs:", rs)
             res = [tuple(i) for i in rs]
             return res
@@ -148,10 +156,11 @@ class Connection(object):
 
     def _query_dict_generator(self, sql, Dict, args, chunksize):
         rs = self.execute(sql, args)
-        colunms = [i[0].lower() for i in rs._cursor_description()]
+        columns = [i[0].lower() for i in rs._cursor_description()]
+        self.columns = columns
         res = rs.fetchmany(chunksize)
         while res:
-            yield [Dict(zip(colunms, i)) for i in res]
+            yield [Dict(zip(columns, i)) for i in res]
             res = rs.fetchmany(chunksize)
 
     def query_dict(self, sql, args=[], ordered=False, size=None):
@@ -165,8 +174,9 @@ class Connection(object):
         Dict = OrderedDict if ordered else dict
         if size is None:
             rs = self.execute(sql, args)
-            colunms = [i[0].lower() for i in rs._cursor_description()]
-            return [Dict(zip(colunms, i)) for i in rs.fetchall()]
+            columns = [i[0].lower() for i in rs._cursor_description()]
+            self.columns = columns
+            return [Dict(zip(columns, i)) for i in rs.fetchall()]
         else:
             return self._query_dict_generator(sql, Dict, args, size)
 

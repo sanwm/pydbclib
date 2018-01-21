@@ -135,11 +135,13 @@ class ConAdapter(object):
             return False
 
     def create_table(self, table, field, length=100):
-        if self.exist_table(table) == False:
+        if self.exist_table(table) is False:
             self.log.warn("table '%s' exist" % table)
             return False
         else:
-            sql = "create table %s(%s)" % (table, ','.join(["%s varchar2(%d)" % (i, length) for i in field]))
+            sql = "create table {}({})".format(
+                table, ','.join(["%s varchar2(%d)" % (i, length) for i in field])
+            )
             self.insert(sql)
             return True
 
