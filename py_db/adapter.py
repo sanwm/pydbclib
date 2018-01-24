@@ -45,7 +45,7 @@ class ConAdapter(object):
         elif db == "postgressql":
             self.postgressql_merge(table, args, columns, unique, num)
         else:
-            self.common_merge(table, args, columns, unique, num)
+            return self.common_merge(table, args, columns, unique, num)
 
     def oracle_merge(self, table, args, columns, unique, num=10000):
         param_columns = ','.join([':{0} as {0}'.format(i) for i in columns])
@@ -94,8 +94,10 @@ class ConAdapter(object):
             sql_del = "delete from {0} where {1}=:{1}".format(table, unique)
         sql_in = "INSERT INTO {table}({columns}) VALUES({values})".format(
             table=table, columns=','.join(columns), values=values)
-        self.db.insert(sql_del, args)
-        self.db.insert(sql_in, args)
+        del_count = self.db.insert(sql_del, args)
+        insert_count = self.db.insert(sql_in, args)
+        self.log.info("Merge Count: %s, %s" % (insert_count, del_count))
+        return insert_count - del_count
 
     def delete_repeat(self, table, unique, cp_field="rowid"):
         """
@@ -130,12 +132,12 @@ class ConAdapter(object):
             if rs[0][0]:
                 return True
             else:
-                return None
+                return [None]
         except Exception:
             return False
 
     def create_table(self, table, field, length=100):
-        if self.exist_table(table) is False:
+        if self.exist_table(table):
             self.log.warn("table '%s' exist" % table)
             return False
         else:

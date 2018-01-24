@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 mylog module
+不要直接用logging.info 之类的直接打印日志，直接用logging模块会默认生成root log，其携带的roothandler会影响子log打印
 日志重复打印问题，是因为对同一个log实例，多次添加handler造成的
 并且日志存在继承关系，会对子log产生影响，子log不仅执行自身的handler，也会执行上层的handler
 一直到找到root的handler
@@ -38,8 +39,9 @@ def class_log(debug=DEBUG):
         name = "%s.%s%s" % (instance.__module__,
                             instance.__name__, "> "[:debug])
         log = logging.getLogger(name)
-        log.addHandler(_add_handler(debug))
-        log.setLevel(_debug[debug])
+        if not log.handlers:
+            log.addHandler(_add_handler(debug))
+            log.setLevel(_debug[debug])
         instance.log = log
         return instance
     return wrapper
@@ -54,8 +56,9 @@ def instance_log(instance, debug=DEBUG):
     name = "%s.%s%s" % (instance.__module__,
                         instance.__class__.__name__, "> "[:debug])
     log = logging.getLogger(name)
-    log.addHandler(_add_handler(debug))
-    log.setLevel(_debug[debug])
+    if not log.handlers:
+        log.addHandler(_add_handler(debug))
+        log.setLevel(_debug[debug])
     instance.log = log
 
 
@@ -77,8 +80,9 @@ def module_log(name, debug=DEBUG):
         module_name = name
     name = "{}{}".format(module_name, "> "[:debug])
     log = logging.getLogger(name)
-    log.addHandler(_add_handler(debug))
-    log.setLevel(_debug[debug])
+    if not log.handlers:
+        log.addHandler(_add_handler(debug))
+        log.setLevel(_debug[debug])
     return log
 
 
