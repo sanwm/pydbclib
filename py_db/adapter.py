@@ -125,16 +125,25 @@ class ConAdapter(object):
         sql = "truncate table %s" % table
         self.insert(sql)
 
+    def query_ignore(self, sql, args=[]):
+        try:
+            level = self.db.log.getEffectiveLevel()
+            self.db.log.setLevel(logging.CRITICAL)
+            rs = self.query(sql, args)
+            self.db.log.setLevel(level)
+            return rs
+        except self.db.db_error:
+            return None
+
     def exist_table(self, table):
         sql = "select count(*) from %s" % table
-        try:
-            rs = self.query(sql)
-            if rs[0][0]:
-                return True
-            else:
-                return [None]
-        except Exception:
+        rs = self.query_ignore(sql)
+        if rs is None:
             return False
+        # elif rs[0][0]:
+        #     return True
+        else:
+            return rs[0]
 
     def create_table(self, table, field, length=100):
         if self.exist_table(table):

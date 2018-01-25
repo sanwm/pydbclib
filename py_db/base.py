@@ -51,6 +51,7 @@ class Connection(object):
             self.Error = self.driver.Error
         except AttributeError:
             self.Error = self.DatabaseError
+        self.db_error = self.DatabaseError, self.Error
 
     def create_con(self, *args, **kwargs):
         try:

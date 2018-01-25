@@ -27,8 +27,13 @@ class Connection(object):
         self._connect = None
         self.session = None
         self.columns = None
+        self.disable_log = False
         self._dsn = dsn
         self._echo = echo
+        self.db_error = DatabaseError, DBAPIError
+
+    # def print(self, *args):
+    #     self.log.
 
     @property
     def connect(self):

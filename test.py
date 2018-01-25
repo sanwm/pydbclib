@@ -105,6 +105,7 @@ def sqlalchemy_single():
         print('columns3', db.columns)
         print(db.query("select max(id) from py_db_test where id=:1", ['1']))
         print('columns4', db.columns)
+        print(db.exist_table('py_db_test'))
     finally:
         db.execute('drop table py_db_test')
         print('columns5', db.columns)
