@@ -1,3 +1,6 @@
+"""
+基于sqlalchemy数据库连接层封装
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool

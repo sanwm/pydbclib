@@ -11,11 +11,9 @@ __all__ = ["module_log", "instance_log", "class_log"]
 
 import logging
 import os
-# import sys
-# if __name__ == "__main__":
-#     sys.path.insert(0, '..')
 # from vastio.config import config
 # DEBUG = config.DEBUG
+
 DEBUG = None
 _debug = {
     True: logging.DEBUG,

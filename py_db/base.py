@@ -1,3 +1,6 @@
+"""
+通用数据库连接层封装
+"""
 from collections import OrderedDict
 import sys
 import os
