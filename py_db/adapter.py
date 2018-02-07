@@ -23,12 +23,34 @@ class ConAdapter(object):
                 else:
                     raise ArgsError('参数列表中元素必须为字典')
             else:
-                raise ArgsError('参数必须是非列表')
+                raise ArgsError('参数必须是列表或字典')
         columns = [i for i in dict_tmp]
         values = ','.join([':%s' % i for i in columns])
         sql_in = "INSERT INTO {table}({columns}) VALUES({values})".format(
             table=table, columns=','.join(columns), values=values)
         self.insert(sql_in, dict_args)
+
+    def update_by_dict(self, table, dict_args, unique):
+        unique = unique.lower()
+        if isinstance(dict_args, dict):
+            dict_tmp = dict_args
+        else:
+            if dict_args and isinstance(dict_args, (list, tuple)):
+                if isinstance(dict_args[0], dict):
+                    dict_tmp = dict_args[0]
+                else:
+                    raise ArgsError('参数列表中元素必须为字典')
+            else:
+                raise ArgsError('参数必须是列表或字典')
+        dict_tmp = map(lambda x: x.lower(), dict_tmp)
+        if unique in dict_tmp:
+            columns = ["{0}=:{0}".format(i) for i in dict_tmp if i != unique]
+            unique = "{0}=:{0}".format(unique)
+            sql_in = "UPDATE {table} set {columns} where {unique}".format(
+                table=table, columns=','.join(columns), unique=unique)
+            return self.insert(sql_in, dict_args)
+        else:
+            raise ArgsError('unique(%s)字段不再参数列表中' % unique)
 
     def merge(self, table, args, unique, num=10000, db_type=None):
         check = (not args or not isinstance(args, (tuple, list)) or
@@ -88,7 +110,7 @@ class ConAdapter(object):
                    values=values, update_field=field))
         self.db.insert(sql, args)
 
-    def common_merge(self, table, args, columns, unique, num=10000):
+    def common_merge(self, table, args, columns, unique, num):
         values = ','.join([':%s' % i for i in columns])
         if isinstance(unique, (list, tuple)):
             unique = ' and '.join(['{0}=:{0}'.format(i) for i in unique])
@@ -97,9 +119,9 @@ class ConAdapter(object):
             sql_del = "delete from {0} where {1}=:{1}".format(table, unique)
         sql_in = "INSERT INTO {table}({columns}) VALUES({values})".format(
             table=table, columns=','.join(columns), values=values)
-        del_count = self.db.insert(sql_del, args)
-        insert_count = self.db.insert(sql_in, args)
-        self.log.info("Merge Count: %s, %s" % (insert_count, del_count))
+        del_count = self.db.insert(sql_del, args, num)
+        insert_count = self.db.insert(sql_in, args, num)
+        self.log.debug("Merge Count: %s, %s" % (insert_count, del_count))
         return insert_count - del_count
 
     def delete_repeat(self, table, unique, cp_field="rowid"):
@@ -127,16 +149,6 @@ class ConAdapter(object):
     def empty(self, table):
         sql = "truncate table %s" % table
         self.insert(sql)
-
-    def query_ignore(self, sql, args=[]):
-        try:
-            level = self.db.log.getEffectiveLevel()
-            self.db.log.setLevel(logging.CRITICAL)
-            rs = self.query(sql, args)
-            self.db.log.setLevel(level)
-            return rs
-        except self.db.db_error:
-            return None
 
     def exist_table(self, table):
         sql = "select count(*) from %s" % table

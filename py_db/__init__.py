@@ -3,7 +3,7 @@
     db connection
 """
 __author__ = "lyt"
-__version__ = '1.0.2'
+__version__ = '1.1rc0'
 __all__ = ['connection']
 
 from py_db.adapter import ConAdapter

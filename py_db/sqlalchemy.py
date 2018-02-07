@@ -56,7 +56,7 @@ class Connection(object):
         else:
             try:
                 self._connect = dsn if isinstance(
-                    dsn, engine.base.Engine) else create_engine(dsn, poolclass=NullPool, echo=self._echo)
+                    dsn, engine.base.Engine) else create_engine(dsn, echo=self._echo)  # poolclass=NullPool
             except Exception as reason:
                 self.log.critical(
                     "db connect failed args: %s, "
@@ -143,6 +143,17 @@ class Connection(object):
         while res:
             yield res
             res = rs.fetchmany(chunksize)
+
+    def query_ignore(self, sql, args=[]):
+        try:
+            if args:
+                self.log.info("execute sql(%s) ignore error\nParam:%s" % (sql, args))
+            else:
+                self.log.info("execute sql(%s) ignore error" % sql)
+            rs = self.session.execute(sql, args)
+            return rs.fetchall()
+        except self.db_error:
+            return None
 
     def query(self, sql, args=[], size=None):
         """

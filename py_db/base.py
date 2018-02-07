@@ -162,6 +162,17 @@ class Connection(object):
             yield res
             res = self.session.fetchmany(chunksize)
 
+    def query_ignore(self, sql, args=[]):
+        try:
+            if args:
+                self.log.info("execute sql(%s) ignore error\nParam:%s" % (sql, args))
+            else:
+                self.log.info("execute sql(%s) ignore error" % sql)
+            self.session.execute(sql, args)
+            return self.session.fetchall()
+        except self.db_error:
+            return None
+
     def query(self, sql, args=[], size=None):
         """
         :param sql: str
