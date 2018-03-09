@@ -145,6 +145,8 @@ class Connection(object):
             res = rs.fetchmany(chunksize)
 
     def query_ignore(self, sql, args=[]):
+        if self._connect is None:
+            self.reset()
         try:
             if args:
                 self.log.info("execute sql(%s) ignore error\nParam:%s" % (sql, args))
@@ -295,7 +297,8 @@ class Connection(object):
         """
         关闭数据库连接
         """
-        self.session.close()
+        if self._connect is not None:
+            self.session.close()
 
     def __enter__(self):
         return self

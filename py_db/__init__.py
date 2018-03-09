@@ -3,7 +3,7 @@
     db connection
 """
 __author__ = "lyt"
-__version__ = '1.1rc0'
+__version__ = '1.1'
 __all__ = ['connection']
 
 from py_db.adapter import ConAdapter
@@ -49,3 +49,14 @@ def connection(*args, **kw):
     rs = uri or dsn
     args = (rs,) if rs else () + args
     return ConAdapter(_connection_factory(*args, **kw))
+
+
+class Connection(ConAdapter):
+
+    def __init__(self, *args, **kw):
+        kw = kw.copy()
+        uri = kw.pop('uri', None)
+        dsn = kw.pop('dsn', None)
+        rs = uri or dsn
+        args = (rs,) if rs else () + args
+        super().__init__(_connection_factory(*args, **kw))

@@ -116,11 +116,14 @@ def sqlalchemy_single():
 
 def test():
     # with connection(host='localhost', port=10000, user='hive', password='hive', database='default', auth_mechanism='PLAIN', driver="impala.dbapi") as db:
-    db1 = connection("oracle://jwdn:jwdn@local:1521/xe", echo=True)
-    db1.query("select * from SS1")
-    db2 = connection("oracle://jwdn:jwdn@local:1521/xe", echo='debug')
-    db2.query("select * from SS1")
-    db1.query("select * from SS1")
+    # db1 = connection("oracle://jwdn:jwdn@local:1521/xe", echo=True)
+    # db1.query("select * from SS1")
+    # db2 = connection("oracle://jwdn:jwdn@local:1521/xe", echo='debug')
+    # db2.query("select * from SS1")
+    # db1.query("select * from SS1")
+    from py_db import Connection
+    with Connection("oracle://lyt:lyt@local:1521/xe") as db:
+        print(1, db.query("select 1 from dual"))
 
 
 def main():
@@ -132,5 +135,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # test()
+    # main()
+    test()

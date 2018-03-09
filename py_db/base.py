@@ -233,8 +233,9 @@ class Connection(object):
         """
         关闭数据库连接
         """
-        self.session.close()
-        self.connect.close()
+        if self._connect is not None:
+            self.session.close()
+            self.connect.close()
 
     def __enter__(self):
         return self
