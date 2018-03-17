@@ -1,6 +1,6 @@
-## python 所有关系型数据库适配及操作封装
+## python general database utils for humans
 
-###Installation:
+### Installation:
     pip install py_db
 
 #### usage:
