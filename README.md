@@ -1,4 +1,5 @@
-## python general database utils for humans
+## py_db: database for humans
+py_db is a database utils for python
 
 ### Installation:
     pip install py_db

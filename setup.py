@@ -12,7 +12,7 @@ setup(
     name='py_db',
     version=version,
     install_requires=['sqlalchemy>=1.1.4'],
-    description='python general database utils for humans',
+    description='database for humans',
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Environment :: Web Environment",
