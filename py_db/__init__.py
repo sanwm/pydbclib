@@ -3,7 +3,7 @@
     python Relational Database opertate for humans
 """
 __author__ = "lyt"
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __all__ = ["connection", "Connection"]
 
 from py_db.adapter import ConAdapter
