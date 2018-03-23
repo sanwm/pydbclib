@@ -8,10 +8,55 @@ from py_db.error import ArgsError
 
 
 class ConAdapter(object):
+    """
+    数据库操作适配器
+    """
     def __init__(self, db):
         self.db = db
         instance_log(self, db.log.isEnabledFor(logging.DEBUG))
         self.dict_query = self.db.query_dict
+
+    def ddl(self, sql, args=[]):
+        """
+        Data Definition Language(数据库定义语言)操作接口
+        :param sql: sql 语句
+        :param args: sql 语句参数
+        :param return: None
+        """
+        self.execute(sql, args)
+
+    def read(self, sql, args=[], size=None):
+        """
+        Data Query Language(数据库查询语言)操作接口
+        :param sql: sql 语句(str)
+        :param args: sql 语句参数(list or dict)
+        :param size: 指定查询结果每次返回数量, 并以生成器的对象返回，为空时直接返回结果集(int)
+        :param return: size=None返回[(1, 'test')] 格式, size不是None以生成器的对象返回
+        """
+        return self.query(sql, args=args, size=size)
+    
+    def write(self, sql, args=[], num=10000):
+        """
+        Data Manipulation Language(数据库操纵语言)操作接口
+        :param sql: sql 语句(str)
+        :param args: sql 语句参数(list or dict)
+        :param num: 每次最多插入的数据量(int)
+        :param return: 表示影响行数(int)
+        """
+        return self.insert(sql, args=args, num=num)
+    
+    def write_by_dict(self, table, dict_args, unique=None):
+        """
+        以字典和table字段做映射进行数据插入或更新
+        :param table: 表名称(str)
+        :param dict_args: 数据数据字典对象集合(dict in list)
+        :param unique: 设定唯一键值(list or str), 为空时是会插入数据， 非空时为更新数据
+        :param return: 表示影响行数(int)
+        """
+        if unique:
+            self.update_by_dict(table, dict_args, unique)
+        else:
+            self.insert_by_dict(table, dict_args)
 
     def insert_by_dict(self, table, dict_args):
         if isinstance(dict_args, dict):
@@ -53,6 +98,16 @@ class ConAdapter(object):
             raise ArgsError('unique(%s)字段不再参数列表中' % unique)
 
     def merge(self, table, args, unique, num=10000, db_type=None):
+        """
+        以merge方式插入数据，不同数据库的merge机制不一样，通过db_type参数区分，
+        db_type参数为空时可以用于所有数据库，实现机制是有冲突先删除数据再进行插入
+        :param table: 表名称(str)
+        :param dict_args: 数据数据字典对象集合(dict in list)
+        :param unique: 设定唯一键值(list or str)
+        :param num: 每次最多插入的数据量(int)
+        :param db_type: 数据库类型，不同数据库merge的机制不一样
+        :param return: 表示影响行数(int)
+        """
         check = (not args or not isinstance(args, (tuple, list)) or
                  not isinstance(args[0], dict))
         if check:
