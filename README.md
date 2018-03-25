@@ -26,14 +26,16 @@ pydbclib is a database utils for python
         print("test表的总数量为:", count)
 
 
-#### 常用数据库连接
-Common Driver
+#### 常用数据库连接  
+Common Driver  
+
     # 连接oracle
     db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle")
     # 通过odbc方式连接
-    db = connection('DSN=mydb;UID=root;PWD=password', driver="pyodbc")
+    db = connection('DSN=mydb;UID=root;PWD=password', driver="pyodbc")  
 
 Sqlalchemy Driver
+
     # 连接oracle
     db = connection("oracle://jwdn:password@local:1521/xe")
     # 连接mysql
