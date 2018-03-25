@@ -14,19 +14,7 @@ pydbclib is a database utils for python
         db.read("select * from test limit :1", [10]) # 返回元祖集合
         db.read_dict("select * from test") # 返回字典集合
         db.ddl('drop table test')
-
-    # Common Driver
-    # 连接oracle
-    db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle")
-    # 通过odbc方式连接
-    db = connection('DSN=mydb;UID=root;PWD=password', driver="pyodbc")
-
-    # Sqlalchemy Driver
-    # 连接oracle
-    db = connection("oracle://jwdn:password@local:1521/xe")
-    # 连接mysql
-    db = connection("mysql+pyodbc://:@mysqldb")
-
+    
     # udf扩展
     from pydbclib import Connection  
     class MyUDF(Connection):
@@ -36,3 +24,17 @@ pydbclib is a database utils for python
     with MyUDF("oracle://lyt:lyt@local:1521/xe") as db:
         count = db.total_data('test')
         print("test表的总数量为:", count)
+
+
+#### 常用数据库连接
+Common Driver
+    # 连接oracle
+    db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle")
+    # 通过odbc方式连接
+    db = connection('DSN=mydb;UID=root;PWD=password', driver="pyodbc")
+
+Sqlalchemy Driver
+    # 连接oracle
+    db = connection("oracle://jwdn:password@local:1521/xe")
+    # 连接mysql
+    db = connection("mysql+pyodbc://:@mysqldb")
