@@ -12,7 +12,7 @@ setup(
     name='pydbclib',
     version=version,
     install_requires=['sqlalchemy>=1.1.4'],
-    description='Python Database Connectivity lib',
+    description='Python Database Connectivity Lib',
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Environment :: Web Environment",
