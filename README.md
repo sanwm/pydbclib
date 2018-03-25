@@ -9,12 +9,10 @@ pydbclib is a database utils for python
     from pydbclib import connection
     with connection("test.db", driver="sqlite3") as db:
         db.ddl('create table test (id varchar(4) primary key, name varchar(10))')
-        count1 = db.write("insert into test (id, name) values('0001', 'lyt')")
-        count2 = db.write_by_dict('test', {'id': 2, 'name': 'test2'})
-        print("插入的行数:", count1, count2)
-        data1 = db.read("select id, name from test")
-        data2 = db.read_dict("select id, name from test")
-        print("查询到的结果:", data1, data2)
+        db.write("insert into test (id, name) values(:id, :name)", {'id':1, 'name':'test'}) # 返回行数
+        db.write_by_dict('test', {'id': 2, 'name': 'test2'}) # 返回行数
+        db.read("select * from test limit :1", [10]) # 返回元祖集合
+        db.read_dict("select * from test") # 返回字典集合
         db.ddl('drop table test')
 
     # Common Driver
