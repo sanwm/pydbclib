@@ -1,4 +1,4 @@
-## pydbclib: database for humans
+## pydbclib: Python Database Connectivity Lib
 pydbclib is a database utils for python
 
 ### Installation:
@@ -17,17 +17,17 @@ pydbclib is a database utils for python
         print("查询到的结果:", data1, data2)
         db.ddl('drop table test')
 
-    # base dbapi module
+    # Common Driver
     # 连接oracle
-    db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle", debug=True)
+    db = connection('jwdn/password@local:1521/xe', driver="cx_Oracle")
     # 通过odbc方式连接
     db = connection('DSN=mydb;UID=root;PWD=password', driver="pyodbc")
 
-    # sqlalchemy module
+    # Sqlalchemy Driver
     # 连接oracle
-    db = connection("oracle://jwdn:password@local:1521/xe", debug=True)
+    db = connection("oracle://jwdn:password@local:1521/xe")
     # 连接mysql
-    db = connection("mysql+pyodbc://:@mysqldb", debug=True)
+    db = connection("mysql+pyodbc://:@mysqldb")
 
     # udf扩展
     from pydbclib import Connection  
