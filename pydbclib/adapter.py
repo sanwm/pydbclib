@@ -3,8 +3,8 @@
 """
 # import sys
 import logging
-from py_db.logger import instance_log
-from py_db.error import ArgsError
+from pydbclib.logger import instance_log
+from pydbclib.error import ArgsError
 
 
 class ConAdapter(object):

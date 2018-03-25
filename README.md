@@ -1,12 +1,12 @@
-## py_db: database for humans
-py_db is a database utils for python
+## pydbclib: database for humans
+pydbclib is a database utils for python
 
 ### Installation:
-    pip install py_db
+    pip install pydbclib
 
 #### usage:
 
-    from py_db import connection
+    from pydbclib import connection
     with connection("test.db", driver="sqlite3") as db:
         db.ddl('create table test (id varchar(4) primary key, name varchar(10))')
         count1 = db.write("insert into test (id, name) values('0001', 'lyt')")
@@ -30,7 +30,7 @@ py_db is a database utils for python
     db = connection("mysql+pyodbc://:@mysqldb", debug=True)
 
     # udf扩展
-    from py_db import Connection  
+    from pydbclib import Connection  
     class MyUDF(Connection):
         def total_data(self, table):  
             return self.read("select count(*) from :1", table)

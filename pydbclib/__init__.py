@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-    python Relational Database opertate for humans
+    Python Database Connectivity lib
 """
 __author__ = "lyt"
-__version__ = '1.1.0'
+__version__ = '1.2.1'
 __all__ = ["connection", "Connection"]
 
-from py_db.adapter import ConAdapter
-from py_db import base
-from py_db import sqlalchemy
+from pydbclib.adapter import ConAdapter
+from pydbclib import base
+from pydbclib import sqlalchemy
 
 
 def _connection_factory(*args, **kwargs):
@@ -26,7 +26,7 @@ def connection(*args, **kw):
     """
     数据库连接配置适配
     For example:
-        from py_db import connection
+        from pydbclib import connection
         with connection("test.db", driver="sqlite3") as db:
             db.execute('create table test (id varchar(4) primary key, name varchar(10))')
             count = db.insert("insert into test (id, name) values('0001', 'lyt')")
@@ -53,15 +53,15 @@ def connection(*args, **kw):
                 timeout=3600, driver="impala.dbapi")
     
     常用操作函数usage:
-        >>> db.query("select id,name from py_db_test where name=:1", ['test'])
+        >>> db.query("select id,name from pydbclib_test where name=:1", ['test'])
         []
-        >>> db.insert("insert into py_db_test(id,name) values(:id, :name)", {'id': 1, 'name': 'test1'})
+        >>> db.insert("insert into pydbclib_test(id,name) values(:id, :name)", {'id': 1, 'name': 'test1'})
         1
         >>> db.insert_by_dict('test', {'id': 2, 'name': 'test2'})
         1
-        >>> db.query("select id,name from py_db_test where name=:name", {'name': 'test'})
+        >>> db.query("select id,name from pydbclib_test where name=:name", {'name': 'test'})
         [(1, test)]
-        >>> db.dict_query("select id,name from py_db_test where name=:name", {'name': 'test'})
+        >>> db.dict_query("select id,name from pydbclib_test where name=:name", {'name': 'test'})
         [{'id':1, 'name': 'test'}]
     """
     kw = kw.copy()
@@ -78,7 +78,7 @@ class Connection(ConAdapter):
     :param ConAdapter: 数据库操作适配
     For example:
 
-        from py_db import Connection
+        from pydbclib import Connection
         class MyUDF(Connection):
             def total_data(self, table):
                 return self.query("select count(*) from %s" % table)

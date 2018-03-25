@@ -10,11 +10,11 @@ from sqlalchemy import engine
 import re
 import os
 # import sys
-from py_db.utils import reduce_num
-from py_db.sql import handle
-from py_db.logger import instance_log
+from pydbclib.utils import reduce_num
+from pydbclib.sql import handle
+from pydbclib.logger import instance_log
 # from collections import property
-# from py_db.error import ConnectError, ExecuteError
+# from pydbclib.error import ConnectError, ExecuteError
 os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
 
 

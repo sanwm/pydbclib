@@ -1,7 +1,7 @@
 import json
 import functools
 import time
-from py_db.logger import instance_log
+from pydbclib.logger import instance_log
 
 
 class ObjEncoder(json.JSONEncoder):

@@ -1,30 +1,30 @@
-from py_db import connection
+from pydbclib import connection
 debug = True
 # debug = False
 
 
 def basic(db, db_type=None):
-    db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
+    db.execute("create table pydbclib_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
-        db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
-        sql1 = "select id,foo,bar from py_db_test where id=:a and foo=:a"
-        sql = "select id,foo,bar from py_db_test"
+        db.insert("insert into pydbclib_test(id,foo,bar) values('aaa','hello','中国')")
+        sql1 = "select id,foo,bar from pydbclib_test where id=:a and foo=:a"
+        sql = "select id,foo,bar from pydbclib_test"
         rs1 = db.query(sql1, {'a': '1', 'b': '2'})
         print(rs1)
         db.insert(
-            "insert into py_db_test(id,foo,bar) values(:1,:1,:1)",
+            "insert into pydbclib_test(id,foo,bar) values(:1,:1,:1)",
             ['bbb', 'abc', '一二三'])
         db.insert(
-            "insert into py_db_test(id,foo,bar) values(:1,:1,:1)",
+            "insert into pydbclib_test(id,foo,bar) values(:1,:1,:1)",
             [('1', 'a', '一'), ('2', 'b', '二')])
         print(db.query(sql))
         param = [{'id': '1', 'foo': 'a', 'bar': 'one'},
                  {'id': '2', 'foo': 'b', 'bar': 'two'},
                  {'id': '3', 'foo': 'c', 'bar': 'three'}]
-        db.merge('py_db_test', param, 'id', db_type=db_type)
+        db.merge('pydbclib_test', param, 'id', db_type=db_type)
         print(db.query(sql))
     finally:
-        db.execute('drop table py_db_test')
+        db.execute('drop table pydbclib_test')
 
 
 def sqlalchemy_test():
@@ -79,38 +79,38 @@ def base_test():
 
 def basic_single():
     db = connection(uri='DSN=mysqldb', driver="pyodbc", debug=debug)
-    db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
+    db.execute("create table pydbclib_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
-        db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
-        db.insert_by_dict("py_db_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
-        print(db.query("select * from py_db_test where id=:1", ['aaa']))
-        print(db.query("select * from py_db_test where id=:1", ['1']))
-        print(db.query("select max(foo) from py_db_test where id=:1", ['1']))
+        db.insert("insert into pydbclib_test(id,foo,bar) values('aaa','hello','中国')")
+        db.insert_by_dict("pydbclib_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
+        print(db.query("select * from pydbclib_test where id=:1", ['aaa']))
+        print(db.query("select * from pydbclib_test where id=:1", ['1']))
+        print(db.query("select max(foo) from pydbclib_test where id=:1", ['1']))
     finally:
-        db.execute('drop table py_db_test')
+        db.execute('drop table pydbclib_test')
 
 
 def sqlalchemy_single():
     db = connection(dsn="oracle://jwdn:jwdn@local:1521/xe", debug=debug)
     db = connection('DSN=oracledb;PWD=jwdn', driver="pyodbc", debug=debug)
     print(db.connect)
-    db.execute("create table py_db_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
+    db.execute("create table pydbclib_test(id varchar(20) primary key,foo varchar(100), bar varchar(100))")
     try:
-        db.insert("insert into py_db_test(id,foo,bar) values('aaa','hello','中国')")
-        db.insert_by_dict("py_db_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
+        db.insert("insert into pydbclib_test(id,foo,bar) values('aaa','hello','中国')")
+        db.insert_by_dict("pydbclib_test", {'id': 'aaa1','foo': 'hello','bar': '中国'})
         print('columns1', db.columns)
-        print(db.query("select * from py_db_test where id=:1", ['aaa']))
+        print(db.query("select * from pydbclib_test where id=:1", ['aaa']))
         print('columns2', db.columns)
-        print(db.query("select * from py_db_test where id=:1", ['1']))
+        print(db.query("select * from pydbclib_test where id=:1", ['1']))
         print('columns3', db.columns)
-        print(db.query("select max(id) from py_db_test where id=:1", ['1']))
+        print(db.query("select max(id) from pydbclib_test where id=:1", ['1']))
         print('columns4', db.columns)
-        print('exist table:', db.exist_table('py_db_test'))
-        rs = db.dict_query("select * from py_db_test")
-        count = db.update_by_dict('py_db_test', rs, 'id')
+        print('exist table:', db.exist_table('pydbclib_test'))
+        rs = db.dict_query("select * from pydbclib_test")
+        count = db.update_by_dict('pydbclib_test', rs, 'id')
         print('count:', count)
     finally:
-        db.execute('drop table py_db_test')
+        db.execute('drop table pydbclib_test')
         print('columns5', db.columns)
 
 
@@ -121,7 +121,7 @@ def test():
     # db2 = connection("oracle://jwdn:jwdn@local:1521/xe", echo='debug')
     # db2.query("select * from SS1")
     # db1.query("select * from SS1")
-    from py_db import Connection
+    from pydbclib import Connection
     with Connection("oracle://lyt:lyt@local:1521/xe") as db:
         print(1, db.query("select 1 from dual"))
 
