@@ -31,8 +31,8 @@ def sqlalchemy_test():
     # debug = False
     db = connection("oracle://jwdn:jwdn@local:1521/xe", debug=debug)
     basic(db, 'oracle')
-    db = connection("mysql+pyodbc://:@mysqldb", debug=debug)
-    basic(db, 'mysql')
+    # db = connection("mysql+pyodbc://:@mysqldb", debug=debug)
+    # basic(db, 'mysql')
     db1 = connection(
         "mysql+pymysql://root:hadoop@centos:3306/test?charset=utf8",
         debug=debug)
@@ -127,13 +127,13 @@ def test():
 
 
 def main():
-    # base_test()
-    # sqlalchemy_test()
-    # basic_single()
+    base_test()
+    sqlalchemy_test()
+    basic_single()
     sqlalchemy_single()
     print('SUCCESS')
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     test()
