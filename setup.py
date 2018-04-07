@@ -11,7 +11,7 @@ with open('pydbclib/__init__.py', 'rb') as f:
 setup(
     name='pydbclib',
     version=version,
-    install_requires=['sqlalchemy>=1.1.4'],
+    install_requires=['sqlalchemy>=1.1.14'],
     description='Python Database Connectivity Lib',
     classifiers=[
         "License :: OSI Approved :: MIT License",
